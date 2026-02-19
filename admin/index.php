@@ -1,6 +1,6 @@
 <?php
 // admin/index.php
-// Redirect to login page
-header("Location: login.php");
+// Redirect to login page in root
+header("Location: ../login");
 exit;
 ?>
