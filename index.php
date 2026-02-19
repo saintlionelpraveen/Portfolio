@@ -48,6 +48,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['send_message'])) {
         <a href="#home" class="logo">Praveen</a>
         <ul class="nav-links">
             <li><a href="#home">Home</a></li>
+            <li><a href="#home">Home</a></li>
             <li><a href="#about">About</a></li>
             <li><a href="#projects">Works</a></li>
             <li><a href="#contact" class="nav-btn">Contact <i class="fas fa-arrow-right"></i></a></li>
