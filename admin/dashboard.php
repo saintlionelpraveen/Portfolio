@@ -1,7 +1,167 @@
 <?php
 // admin/dashboard.php
 require_once '../config/config.php';
-require_once '../includes/functions.php';
+// Sanitize user input
+function clean_input($data) {
+    global $conn;
+    $data = trim($data);
+    $data = stripslashes($data);
+    $data = htmlspecialchars($data);
+    return $conn->real_escape_string($data);
+}
+
+// Check if admin is logged in
+function check_login() {
+    if (!isset($_SESSION['admin_id'])) {
+        header("Location: login.php");
+        exit();
+    }
+}
+
+// Get Site Content (Dynamic Text)
+function get_site_content($key) {
+    global $conn;
+    try {
+        $stmt = $conn->prepare("SELECT content_value FROM site_content WHERE content_key = ? LIMIT 1");
+        if ($stmt) {
+            $stmt->bind_param("s", $key);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            if ($result->num_rows > 0) {
+                return $result->fetch_assoc()['content_value'];
+            }
+        }
+    } catch (Exception $e) {}
+    return $key;
+}
+
+// Get Internships
+function get_internships() {
+    global $conn;
+    try {
+        $result = $conn->query("SELECT * FROM internships ORDER BY created_at DESC");
+        if ($result) {
+            return $result->fetch_all(MYSQLI_ASSOC);
+        }
+    } catch (Exception $e) {}
+    return [];
+}
+
+// Upload Image Function (Optimized)
+function upload_image($file, $target_dir = "../uploads/") {
+    if (!file_exists($target_dir)) {
+        mkdir($target_dir, 0777, true);
+    }
+
+    $fileName = basename($file["name"]);
+    $imageFileType = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
+
+    // Generate unique name
+    $new_filename = uniqid() . '.' . $imageFileType;
+    $target_path = $target_dir . $new_filename;
+
+    // Check if image file is a actual image or fake image
+    $check = getimagesize($file["tmp_name"]);
+    if ($check === false) {
+        return ["error" => "File is not an image."];
+    }
+
+    // Allow certain file formats
+    $allowed_types = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+    if (!in_array($imageFileType, $allowed_types)) {
+        return ["error" => "Sorry, only JPG, JPEG, PNG, GIF & WEBP files are allowed."];
+    }
+
+    // Size validation (Max 5MB)
+    if ($file["size"] > 5000000) {
+        return ["error" => "Sorry, your file is too large. Max 5MB."];
+    }
+
+    // Optimization Logic
+    $source = $file["tmp_name"];
+    $max_width = 800; // Max width for optimization
+    $quality = 75; // Compression quality
+
+    list($width, $height) = getimagesize($source);
+    $ratio = $width / $height;
+
+    // Calculate new dimensions if resizing is needed
+    if ($width > $max_width) {
+        $new_width = $max_width;
+        $new_height = $max_width / $ratio;
+    } else {
+        $new_width = $width;
+        $new_height = $height;
+    }
+
+    // Create a new true color image
+    $thumb = imagecreatetruecolor($new_width, $new_height);
+
+    // Load source image based on type
+    switch ($imageFileType) {
+        case 'jpg':
+        case 'jpeg':
+            $source_image = imagecreatefromjpeg($source);
+            break;
+        case 'png':
+            $source_image = imagecreatefrompng($source);
+            imagealphablending($thumb, false);
+            imagesavealpha($thumb, true);
+            break;
+        case 'gif':
+            $source_image = imagecreatefromgif($source);
+            $transparent_index = imagecolortransparent($source_image);
+            if ($transparent_index >= 0) {
+                imagepalettecopy($thumb, $source_image);
+                imagefill($thumb, 0, 0, $transparent_index);
+                imagecolortransparent($thumb, $transparent_index);
+                imagetruecolortopalette($thumb, true, 256);
+            }
+            break;
+        case 'webp':
+            $source_image = imagecreatefromwebp($source);
+            break;
+        default:
+            return ["error" => "Unsupported file type for optimization."];
+    }
+
+    if (!$source_image) {
+        if (move_uploaded_file($source, $target_path)) {
+            return ["success" => $new_filename];
+        }
+        return ["error" => "Failed to process image."];
+    }
+
+    // Resize
+    imagecopyresampled($thumb, $source_image, 0, 0, 0, 0, $new_width, $new_height, $width, $height);
+
+    // Save optimized image
+    $saved = false;
+    switch ($imageFileType) {
+        case 'jpg':
+        case 'jpeg':
+            $saved = imagejpeg($thumb, $target_path, $quality);
+            break;
+        case 'png':
+            $saved = imagepng($thumb, $target_path, 8);
+            break;
+        case 'gif':
+            $saved = imagegif($thumb, $target_path);
+            break;
+        case 'webp':
+            $saved = imagewebp($thumb, $target_path, $quality);
+            break;
+    }
+
+    imagedestroy($thumb);
+    imagedestroy($source_image);
+
+    if ($saved) {
+        return ["success" => $new_filename];
+    } else {
+        return ["error" => "Sorry, there was an error uploading/optimizing your file."];
+    }
+}
 
 check_login();
 

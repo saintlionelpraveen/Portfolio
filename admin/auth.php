@@ -2,7 +2,15 @@
 // admin/auth.php
 session_start();
 require_once '../config/config.php';
-require_once '../includes/functions.php';
+// Sanitize user input
+function clean_input($data)
+{
+    global $conn;
+    $data = trim($data);
+    $data = stripslashes($data);
+    $data = htmlspecialchars($data);
+    return $conn->real_escape_string($data);
+}
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $username = clean_input($_POST['username']);

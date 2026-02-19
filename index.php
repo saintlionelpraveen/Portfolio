@@ -1,7 +1,69 @@
 <?php
 // index.php
 require_once 'config/config.php';
-require_once 'includes/functions.php';
+// Sanitize user input
+function clean_input($data)
+{
+    global $conn;
+    $data = trim($data);
+    $data = stripslashes($data);
+    $data = htmlspecialchars($data);
+    return $conn->real_escape_string($data);
+}
+
+// Get Hero Section Data
+function get_hero_data()
+{
+    global $conn;
+    $sql = "SELECT * FROM hero LIMIT 1";
+    $result = $conn->query($sql);
+    if ($result->num_rows > 0) {
+        return $result->fetch_assoc();
+    }
+    return ['title' => 'Welcome', 'subtitle' => 'I am a Developer'];
+}
+
+// Get Social Links
+function get_social_links()
+{
+    global $conn;
+    $sql = "SELECT * FROM social_links";
+    $result = $conn->query($sql);
+    return $result;
+}
+
+// Get Site Content (Dynamic Text)
+function get_site_content($key)
+{
+    global $conn;
+    try {
+        $stmt = $conn->prepare("SELECT content_value FROM site_content WHERE content_key = ? LIMIT 1");
+        if ($stmt) {
+            $stmt->bind_param("s", $key);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            if ($result->num_rows > 0) {
+                return $result->fetch_assoc()['content_value'];
+            }
+        }
+    } catch (Exception $e) {
+    }
+    return $key;
+}
+
+// Get Internships
+function get_internships()
+{
+    global $conn;
+    try {
+        $result = $conn->query("SELECT * FROM internships ORDER BY created_at DESC");
+        if ($result) {
+            return $result->fetch_all(MYSQLI_ASSOC);
+        }
+    } catch (Exception $e) {
+    }
+    return [];
+}
 
 // Fetch Data
 $hero = get_hero_data();
@@ -148,20 +210,28 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['send_message'])) {
     <!-- Internships Section -->
     <section id="internships" style="background: var(--bg-hover);">
         <h2 class="fade-in">Internships & Experience</h2>
-        <div class="projects-grid" style="display: flex; flex-direction: column; max-width: 800px; margin: 0 auto; gap: 1.5rem;">
+        <div class="projects-grid"
+            style="display: flex; flex-direction: column; max-width: 800px; margin: 0 auto; gap: 1.5rem;">
             <?php foreach ($internships as $intern): ?>
-                <div class="project-card fade-in" style="display: flex; gap: 1.5rem; text-align: left; align-items: flex-start;">
+                <div class="project-card fade-in"
+                    style="display: flex; gap: 1.5rem; text-align: left; align-items: flex-start;">
                     <?php if ($intern['company_logo']): ?>
-                        <img src="uploads/<?php echo $intern['company_logo']; ?>" alt="Logo" style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                        <img src="uploads/<?php echo $intern['company_logo']; ?>" alt="Logo"
+                            style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
                     <?php else: ?>
-                        <div style="width: 60px; height: 60px; background: #e0f2fe; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: var(--accent-color); font-size: 1.5rem;">
+                        <div
+                            style="width: 60px; height: 60px; background: #e0f2fe; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: var(--accent-color); font-size: 1.5rem;">
                             <i class="fas fa-briefcase"></i>
                         </div>
                     <?php endif; ?>
-                    
+
                     <div style="flex: 1;">
-                        <h3 style="margin-bottom: 0.2rem; color: var(--text-color);"><?php echo htmlspecialchars($intern['company_name']); ?></h3>
-                        <p style="font-weight: 600; color: var(--accent-color); margin-bottom: 0.5rem;"><?php echo htmlspecialchars($intern['role']); ?> <span style="font-weight: normal; color: var(--text-light); font-size: 0.9rem;">• <?php echo htmlspecialchars($intern['duration']); ?></span></p>
+                        <h3 style="margin-bottom: 0.2rem; color: var(--text-color);">
+                            <?php echo htmlspecialchars($intern['company_name']); ?></h3>
+                        <p style="font-weight: 600; color: var(--accent-color); margin-bottom: 0.5rem;">
+                            <?php echo htmlspecialchars($intern['role']); ?> <span
+                                style="font-weight: normal; color: var(--text-light); font-size: 0.9rem;">•
+                                <?php echo htmlspecialchars($intern['duration']); ?></span></p>
                         <p style="font-size: 0.95rem; color: var(--text-light); line-height: 1.6;">
                             <?php echo nl2br(htmlspecialchars($intern['description'])); ?>
                         </p>
