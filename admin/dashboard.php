@@ -2,7 +2,8 @@
 // admin/dashboard.php
 require_once '../config/config.php';
 // Sanitize user input
-function clean_input($data) {
+function clean_input($data)
+{
     global $conn;
     $data = trim($data);
     $data = stripslashes($data);
@@ -11,15 +12,17 @@ function clean_input($data) {
 }
 
 // Check if admin is logged in
-function check_login() {
+function check_login()
+{
     if (!isset($_SESSION['admin_id'])) {
-        header("Location: login.php");
+        header("Location: ../login.php");
         exit();
     }
 }
 
 // Get Site Content (Dynamic Text)
-function get_site_content($key) {
+function get_site_content($key)
+{
     global $conn;
     try {
         $stmt = $conn->prepare("SELECT content_value FROM site_content WHERE content_key = ? LIMIT 1");
@@ -31,24 +34,28 @@ function get_site_content($key) {
                 return $result->fetch_assoc()['content_value'];
             }
         }
-    } catch (Exception $e) {}
+    } catch (Exception $e) {
+    }
     return $key;
 }
 
 // Get Internships
-function get_internships() {
+function get_internships()
+{
     global $conn;
     try {
         $result = $conn->query("SELECT * FROM internships ORDER BY created_at DESC");
         if ($result) {
             return $result->fetch_all(MYSQLI_ASSOC);
         }
-    } catch (Exception $e) {}
+    } catch (Exception $e) {
+    }
     return [];
 }
 
 // Upload Image Function (Optimized)
-function upload_image($file, $target_dir = "../uploads/") {
+function upload_image($file, $target_dir = "../uploads/")
+{
     if (!file_exists($target_dir)) {
         mkdir($target_dir, 0777, true);
     }
