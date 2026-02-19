@@ -148,25 +148,39 @@ function upload_image($file, $target_dir = "../uploads/")
 }
 
 // Get Site Content (Dynamic Text)
+// Get Site Content (Dynamic Text)
 function get_site_content($key)
 {
     global $conn;
-    $stmt = $conn->prepare("SELECT content_value FROM site_content WHERE content_key = ? LIMIT 1");
-    $stmt->bind_param("s", $key);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    if ($result->num_rows > 0) {
-        return $result->fetch_assoc()['content_value'];
+    try {
+        $stmt = $conn->prepare("SELECT content_value FROM site_content WHERE content_key = ? LIMIT 1");
+        if ($stmt) {
+            $stmt->bind_param("s", $key);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            if ($result->num_rows > 0) {
+                return $result->fetch_assoc()['content_value'];
+            }
+        }
+    } catch (Exception $e) {
+        // Table doesn't exist yet, return key as fallback
     }
-    return ""; // Return empty string if not found
+    return $key; // Return key as fallback if not found or error
 }
 
 // Get Internships
 function get_internships()
 {
     global $conn;
-    $result = $conn->query("SELECT * FROM internships ORDER BY created_at DESC");
-    return $result->fetch_all(MYSQLI_ASSOC);
+    try {
+        $result = $conn->query("SELECT * FROM internships ORDER BY created_at DESC");
+        if ($result) {
+            return $result->fetch_all(MYSQLI_ASSOC);
+        }
+    } catch (Exception $e) {
+        // Table doesn't exist
+    }
+    return [];
 }
 
 // Get Hero Section Data
