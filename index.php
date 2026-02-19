@@ -6,6 +6,7 @@ require_once 'includes/functions.php';
 // Fetch Data
 $hero = get_hero_data();
 $socials = get_social_links();
+$internships = get_internships();
 $about = $conn->query("SELECT * FROM about LIMIT 1")->fetch_assoc();
 
 // Handle Contact Form
@@ -45,11 +46,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['send_message'])) {
 
     <!-- Navbar -->
     <nav>
-        <a href="#home" class="logo">Praveen</a>
+        <a href="#home" class="logo"><?php echo get_site_content('navbar_logo'); ?></a>
         <ul class="nav-links">
-            <li><a href="#home">Home</a></li>
+
             <li><a href="#home">Home</a></li>
             <li><a href="#about">About</a></li>
+            <li><a href="#internships">Internships</a></li>
             <li><a href="#projects">Works</a></li>
             <li><a href="#contact" class="nav-btn">Contact <i class="fas fa-arrow-right"></i></a></li>
         </ul>
@@ -62,7 +64,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['send_message'])) {
             <p><?php echo htmlspecialchars($hero['subtitle']); ?></p>
 
             <div class="cta-group">
-                <a href="#contact" class="btn-primary">Hire Me! <i class="fas fa-arrow-right"></i></a>
+                <a href="#contact" class="btn-primary"><?php echo get_site_content('hire_me_text'); ?> <i
+                        class="fas fa-arrow-right"></i></a>
 
                 <div class="client-stats">
                     <div class="avatars">
@@ -72,8 +75,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['send_message'])) {
                         <img src="https://ui-avatars.com/api/?name=Mike+Ross&background=6366f1&color=fff" alt="Client">
                     </div>
                     <div class="stats-text">
-                        1K+ Clients
-                        <span>Worldwide</span>
+                        <?php echo get_site_content('clients_count'); ?>
+                        <span><?php echo get_site_content('clients_subtext'); ?></span>
                     </div>
                 </div>
             </div>
@@ -90,13 +93,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['send_message'])) {
 
             <!-- Floating Badges -->
             <div class="floating-badge badge-1">
-                <i class="fas fa-palette"></i> UI/UX Designer
+                <i class="fas fa-palette"></i> <?php echo get_site_content('hero_badge_1'); ?>
             </div>
             <div class="floating-badge badge-2">
-                <i class="fas fa-code"></i> Webflow Developer
+                <i class="fas fa-code"></i> <?php echo get_site_content('hero_badge_2'); ?>
             </div>
             <div class="floating-badge badge-3">
-                <i class="fas fa-layer-group"></i> Product Designer
+                <i class="fas fa-layer-group"></i> <?php echo get_site_content('hero_badge_3'); ?>
             </div>
         </div>
     </section>
@@ -139,6 +142,32 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['send_message'])) {
                     <?php endwhile; ?>
                 </div>
             </div>
+        </div>
+    </section>
+
+    <!-- Internships Section -->
+    <section id="internships" style="background: var(--bg-hover);">
+        <h2 class="fade-in">Internships & Experience</h2>
+        <div class="projects-grid" style="display: flex; flex-direction: column; max-width: 800px; margin: 0 auto; gap: 1.5rem;">
+            <?php foreach ($internships as $intern): ?>
+                <div class="project-card fade-in" style="display: flex; gap: 1.5rem; text-align: left; align-items: flex-start;">
+                    <?php if ($intern['company_logo']): ?>
+                        <img src="uploads/<?php echo $intern['company_logo']; ?>" alt="Logo" style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                    <?php else: ?>
+                        <div style="width: 60px; height: 60px; background: #e0f2fe; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: var(--accent-color); font-size: 1.5rem;">
+                            <i class="fas fa-briefcase"></i>
+                        </div>
+                    <?php endif; ?>
+                    
+                    <div style="flex: 1;">
+                        <h3 style="margin-bottom: 0.2rem; color: var(--text-color);"><?php echo htmlspecialchars($intern['company_name']); ?></h3>
+                        <p style="font-weight: 600; color: var(--accent-color); margin-bottom: 0.5rem;"><?php echo htmlspecialchars($intern['role']); ?> <span style="font-weight: normal; color: var(--text-light); font-size: 0.9rem;">• <?php echo htmlspecialchars($intern['duration']); ?></span></p>
+                        <p style="font-size: 0.95rem; color: var(--text-light); line-height: 1.6;">
+                            <?php echo nl2br(htmlspecialchars($intern['description'])); ?>
+                        </p>
+                    </div>
+                </div>
+            <?php endforeach; ?>
         </div>
     </section>
 
@@ -205,7 +234,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['send_message'])) {
                     successfully!</p>
             <?php elseif ($msg_error): ?>
                 <p style="color: #ef4444; text-align: center; margin-bottom: 1rem; font-weight: 600;">
-                    <?php echo $msg_error; ?></p>
+                    <?php echo $msg_error; ?>
+                </p>
             <?php endif; ?>
             <form method="POST" action="#contact">
                 <div class="form-group">

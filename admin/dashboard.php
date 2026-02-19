@@ -133,6 +133,56 @@ if (isset($_GET['delete_project'])) {
     $message = "Project deleted.";
 }
 
+// --- SITE CONTENT UPDATE ---
+if (isset($_POST['update_content'])) {
+    foreach ($_POST as $key => $value) {
+        if (strpos($key, 'content_') === 0) {
+            $content_key = substr($key, 8); // Remove 'content_' prefix
+            $clean_value = clean_input($value);
+
+            $stmt = $conn->prepare("UPDATE site_content SET content_value = ? WHERE content_key = ?");
+            $stmt->bind_param("ss", $clean_value, $content_key);
+            $stmt->execute();
+        }
+    }
+    $message = "Site content updated.";
+}
+
+// --- INTERNSHIP ADD ---
+if (isset($_POST['add_internship'])) {
+    $company = clean_input($_POST['company_name']);
+    $role = clean_input($_POST['role']);
+    $duration = clean_input($_POST['duration']);
+    $desc = clean_input($_POST['description']);
+    $logo_path = '';
+
+    if (!empty($_FILES['company_logo']['name'])) {
+        $upload_result = upload_image($_FILES['company_logo']);
+        if (isset($upload_result['success'])) {
+            $logo_path = $upload_result['success'];
+        } else {
+            $error = $upload_result['error'];
+        }
+    }
+
+    if (empty($error)) {
+        $stmt = $conn->prepare("INSERT INTO internships (company_name, role, duration, description, company_logo) VALUES (?, ?, ?, ?, ?)");
+        $stmt->bind_param("sssss", $company, $role, $duration, $desc, $logo_path);
+        if ($stmt->execute()) {
+            $message = "Internship added.";
+        } else {
+            $error = "Error adding internship.";
+        }
+    }
+}
+
+// --- INTERNSHIP DELETE ---
+if (isset($_GET['delete_internship'])) {
+    $id = (int) $_GET['delete_internship'];
+    $conn->query("DELETE FROM internships WHERE id=$id");
+    $message = "Internship deleted.";
+}
+
 // --- SOCIAL LINK ADD ---
 if (isset($_POST['add_social'])) {
     $platform = clean_input($_POST['social_platform']);
@@ -200,6 +250,12 @@ $about = $conn->query("SELECT * FROM about LIMIT 1")->fetch_assoc();
 $skills = $conn->query("SELECT * FROM skills");
 $projects = $conn->query("SELECT * FROM projects");
 $socials = $conn->query("SELECT * FROM social_links");
+$internships = get_internships();
+$site_content_result = $conn->query("SELECT * FROM site_content");
+$site_content = [];
+while ($row = $site_content_result->fetch_assoc()) {
+    $site_content[$row['content_key']] = $row;
+}
 
 $active_tab = isset($_GET['tab']) ? $_GET['tab'] : 'hero';
 ?>
@@ -230,6 +286,10 @@ $active_tab = isset($_GET['tab']) ? $_GET['tab'] : 'hero';
                         class="fas fa-code"></i> Skills</a></li>
             <li><a href="?tab=projects" class="<?php echo $active_tab == 'projects' ? 'active' : ''; ?>"><i
                         class="fas fa-briefcase"></i> Projects</a></li>
+            <li><a href="?tab=internships" class="<?php echo $active_tab == 'internships' ? 'active' : ''; ?>"><i
+                        class="fas fa-graduation-cap"></i> Internships</a></li>
+            <li><a href="?tab=settings" class="<?php echo $active_tab == 'settings' ? 'active' : ''; ?>"><i
+                        class="fas fa-cogs"></i> General Settings</a></li>
             <li><a href="?tab=social" class="<?php echo $active_tab == 'social' ? 'active' : ''; ?>"><i
                         class="fas fa-share-alt"></i> Socials</a></li>
             <li><a href="?tab=profile" class="<?php echo $active_tab == 'profile' ? 'active' : ''; ?>"><i
@@ -414,6 +474,100 @@ $active_tab = isset($_GET['tab']) ? $_GET['tab'] : 'hero';
                         </table>
                     </div>
                 </div>
+            </div>
+        <?php endif; ?>
+
+        <?php if ($active_tab == 'internships'): ?>
+            <div class="admin-card fade-in">
+                <h2><i class="fas fa-graduation-cap"></i> Manage Internships</h2>
+                <form method="POST" enctype="multipart/form-data">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div class="form-group">
+                            <label>Company Name</label>
+                            <input type="text" name="company_name" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Role / Position</label>
+                            <input type="text" name="role" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Duration (e.g. Jan 2023 - Present)</label>
+                        <input type="text" name="duration" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Description</label>
+                        <textarea name="description" rows="3"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Company Logo</label>
+                        <input type="file" name="company_logo">
+                    </div>
+                    <button type="submit" name="add_internship" class="btn-primary">Add Internship</button>
+                </form>
+
+                <div style="margin-top: 3rem;">
+                    <h3>Experience History</h3>
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Company</th>
+                                    <th>Role</th>
+                                    <th>Duration</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($internships as $intern): ?>
+                                    <tr>
+                                        <td>
+                                            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                                <?php if ($intern['company_logo']): ?>
+                                                    <img src="../uploads/<?php echo $intern['company_logo']; ?>"
+                                                        style="width: 30px; height: 30px; border-radius: 4px; object-fit: cover;">
+                                                <?php else: ?>
+                                                    <i class="fas fa-building" style="color: var(--text-light);"></i>
+                                                <?php endif; ?>
+                                                <?php echo htmlspecialchars($intern['company_name']); ?>
+                                            </div>
+                                        </td>
+                                        <td><?php echo htmlspecialchars($intern['role']); ?></td>
+                                        <td><?php echo htmlspecialchars($intern['duration']); ?></td>
+                                        <td><a href="?tab=internships&delete_internship=<?php echo $intern['id']; ?>"
+                                                class="btn-sm btn-danger" onclick="return confirm('Delete this internship?')"><i
+                                                    class="fas fa-trash"></i></a></td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        <?php endif; ?>
+
+        <?php if ($active_tab == 'settings'): ?>
+            <div class="admin-card fade-in">
+                <h2><i class="fas fa-cogs"></i> General Site Settings</h2>
+                <p style="margin-bottom: 2rem; color: var(--text-light);">Update global text and labels across the website.
+                </p>
+                <form method="POST">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem;">
+                        <?php foreach ($site_content as $key => $data): ?>
+                            <div class="form-group">
+                                <label style="text-transform: capitalize;"><?php echo str_replace('_', ' ', $key); ?>
+                                    <small
+                                        style="font-weight: normal; color: var(--text-light);">(<?php echo $data['description']; ?>)</small>
+                                </label>
+                                <input type="text" name="content_<?php echo $key; ?>"
+                                    value="<?php echo htmlspecialchars($data['content_value']); ?>">
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                    <div style="margin-top: 2rem;">
+                        <button type="submit" name="update_content" class="btn-primary">Save All Settings</button>
+                    </div>
+                </form>
             </div>
         <?php endif; ?>
 

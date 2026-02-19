@@ -147,6 +147,28 @@ function upload_image($file, $target_dir = "../uploads/")
     }
 }
 
+// Get Site Content (Dynamic Text)
+function get_site_content($key)
+{
+    global $conn;
+    $stmt = $conn->prepare("SELECT content_value FROM site_content WHERE content_key = ? LIMIT 1");
+    $stmt->bind_param("s", $key);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    if ($result->num_rows > 0) {
+        return $result->fetch_assoc()['content_value'];
+    }
+    return ""; // Return empty string if not found
+}
+
+// Get Internships
+function get_internships()
+{
+    global $conn;
+    $result = $conn->query("SELECT * FROM internships ORDER BY created_at DESC");
+    return $result->fetch_all(MYSQLI_ASSOC);
+}
+
 // Get Hero Section Data
 function get_hero_data()
 {
