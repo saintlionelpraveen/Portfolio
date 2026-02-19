@@ -250,11 +250,30 @@ $about = $conn->query("SELECT * FROM about LIMIT 1")->fetch_assoc();
 $skills = $conn->query("SELECT * FROM skills");
 $projects = $conn->query("SELECT * FROM projects");
 $socials = $conn->query("SELECT * FROM social_links");
-$internships = get_internships();
-$site_content_result = $conn->query("SELECT * FROM site_content");
+
+// Safe Fetch for Internships
+$internships = [];
+try {
+    $intern_check = $conn->query("SHOW TABLES LIKE 'internships'");
+    if ($intern_check && $intern_check->num_rows > 0) {
+        $internships = get_internships();
+    }
+} catch (Exception $e) { /* Ignore */
+}
+
+// Safe Fetch for Site Content
 $site_content = [];
-while ($row = $site_content_result->fetch_assoc()) {
-    $site_content[$row['content_key']] = $row;
+try {
+    $content_check = $conn->query("SHOW TABLES LIKE 'site_content'");
+    if ($content_check && $content_check->num_rows > 0) {
+        $site_content_result = $conn->query("SELECT * FROM site_content");
+        if ($site_content_result) {
+            while ($row = $site_content_result->fetch_assoc()) {
+                $site_content[$row['content_key']] = $row;
+            }
+        }
+    }
+} catch (Exception $e) { /* Ignore */
 }
 
 $active_tab = isset($_GET['tab']) ? $_GET['tab'] : 'hero';
