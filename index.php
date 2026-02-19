@@ -102,6 +102,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['send_message'])) {
     <title><?php echo $hero['title']; ?> - Portfolio</title>
     <link rel="stylesheet" href="assets/css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
 </head>
 
 <body>
@@ -120,47 +121,43 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['send_message'])) {
     </nav>
 
     <!-- Hero Section -->
-    <section id="home" class="hero">
-        <div class="hero-text fade-in">
-            <h1><?php echo htmlspecialchars($hero['title']); ?></h1>
-            <p><?php echo htmlspecialchars($hero['subtitle']); ?></p>
+    <section id="home" class="hero" style="position: relative; overflow: hidden;">
+        <div class="hero-text fade-in" style="z-index: 2;">
+            <p style="font-family: 'Press Start 2P', cursive; font-size: 1.2rem; color: var(--accent-color); margin-bottom: 1rem;"><?php echo get_site_content('hero_badge_1'); ?></p>
+            
+            <h1 style="font-family: 'Press Start 2P', cursive; font-size: 3.5rem; line-height: 1.4; text-transform: uppercase;">
+                DREAM <span style="color: var(--accent-color);">&</span><br>
+                REALITY
+            </h1>
+            
+            <p style="margin: 1.5rem 0; font-size: 1.1rem; max-width: 500px;"><?php echo htmlspecialchars($hero['subtitle']); ?></p>
 
             <div class="cta-group">
-                <a href="#contact" class="btn-primary"><?php echo get_site_content('hire_me_text'); ?> <i
-                        class="fas fa-arrow-right"></i></a>
+                <a href="#contact" class="btn-primary" style="font-family: 'Press Start 2P', cursive; font-size: 0.8rem; padding: 1rem 2rem;"><?php echo get_site_content('hire_me_text'); ?></a>
 
-                <div class="client-stats">
-                    <div class="avatars">
-                        <!-- Placeholders - simple colored circles or unsplash user images -->
-                        <img src="https://ui-avatars.com/api/?name=John+Doe&background=0D8ABC&color=fff" alt="Client">
-                        <img src="https://ui-avatars.com/api/?name=Jane+Smith&background=3b82f6&color=fff" alt="Client">
-                        <img src="https://ui-avatars.com/api/?name=Mike+Ross&background=6366f1&color=fff" alt="Client">
-                    </div>
-                    <div class="stats-text">
+                <div class="client-stats" style="margin-left: 2rem;">
+                    <div class="stats-text" style="font-family: 'Press Start 2P', cursive; font-size: 0.7rem;">
                         <?php echo get_site_content('clients_count'); ?>
-                        <span><?php echo get_site_content('clients_subtext'); ?></span>
+                        <span style="font-family: 'Poppins', sans-serif; display: block; margin-top: 5px;"><?php echo get_site_content('clients_subtext'); ?></span>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="hero-visual fade-in">
+        <div class="hero-visual fade-in" style="z-index: 1;">
             <div class="hero-bg-blob"></div>
             <?php if (!empty($about['profile_image'])): ?>
-                <img src="uploads/<?php echo $about['profile_image']; ?>" alt="Profile" class="profile-img">
+                <img src="uploads/<?php echo $about['profile_image']; ?>" alt="Profile" class="profile-img" style="border: 4px solid var(--text-color); box-shadow: 10px 10px 0px var(--accent-color);">
             <?php else: ?>
                 <img src="https://ui-avatars.com/api/?name=Praveen&size=500&background=random" alt="Profile"
                     class="profile-img">
             <?php endif; ?>
 
-            <!-- Floating Badges -->
-            <div class="floating-badge badge-1">
-                <i class="fas fa-palette"></i> <?php echo get_site_content('hero_badge_1'); ?>
-            </div>
-            <div class="floating-badge badge-2">
+            <!-- Floating Badges with Pixel Style -->
+            <div class="floating-badge badge-2" style="font-family: 'Press Start 2P', cursive; font-size: 0.7rem; border: 2px solid var(--text-color); box-shadow: 4px 4px 0px var(--text-color); border-radius: 0;">
                 <i class="fas fa-code"></i> <?php echo get_site_content('hero_badge_2'); ?>
             </div>
-            <div class="floating-badge badge-3">
+            <div class="floating-badge badge-3" style="font-family: 'Press Start 2P', cursive; font-size: 0.7rem; border: 2px solid var(--text-color); box-shadow: 4px 4px 0px var(--text-color); border-radius: 0;">
                 <i class="fas fa-layer-group"></i> <?php echo get_site_content('hero_badge_3'); ?>
             </div>
         </div>
@@ -227,11 +224,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['send_message'])) {
 
                     <div style="flex: 1;">
                         <h3 style="margin-bottom: 0.2rem; color: var(--text-color);">
-                            <?php echo htmlspecialchars($intern['company_name']); ?></h3>
+                            <?php echo htmlspecialchars($intern['company_name']); ?>
+                        </h3>
                         <p style="font-weight: 600; color: var(--accent-color); margin-bottom: 0.5rem;">
                             <?php echo htmlspecialchars($intern['role']); ?> <span
                                 style="font-weight: normal; color: var(--text-light); font-size: 0.9rem;">•
-                                <?php echo htmlspecialchars($intern['duration']); ?></span></p>
+                                <?php echo htmlspecialchars($intern['duration']); ?></span>
+                        </p>
                         <p style="font-size: 0.95rem; color: var(--text-light); line-height: 1.6;">
                             <?php echo nl2br(htmlspecialchars($intern['description'])); ?>
                         </p>
