@@ -1,6 +1,56 @@
 <?php
 // login.php
 session_start();
+require_once 'config/config.php';
+
+// Sanitize user input
+function clean_input($data)
+{
+    global $conn;
+    $data = trim($data);
+    $data = stripslashes($data);
+    $data = htmlspecialchars($data);
+    return $conn->real_escape_string($data);
+}
+
+// Handle Login Submission
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    $username = clean_input($_POST['username']);
+    $password = $_POST['password'];
+
+    $sql = "SELECT id, username, password FROM admin_users WHERE username = ?";
+    $stmt = $conn->prepare($sql);
+
+    if ($stmt) {
+        $stmt->bind_param("s", $username);
+        $stmt->execute();
+        $stmt->store_result();
+
+        if ($stmt->num_rows == 1) {
+            $stmt->bind_result($id, $db_username, $db_password);
+            $stmt->fetch();
+
+            if (password_verify($password, $db_password)) {
+                // Password is correct
+                $_SESSION['admin_id'] = $id;
+                $_SESSION['admin_username'] = $db_username;
+                header("Location: admin/dashboard.php");
+                exit();
+            } else {
+                // Invalid password
+                $error_msg = "Invalid username or password.";
+            }
+        } else {
+            // Invalid username
+            $error_msg = "Invalid username or password.";
+        }
+        $stmt->close();
+    } else {
+        $error_msg = "Database error. Please try again later.";
+    }
+}
+
+// Redirect if already logged in
 if (isset($_SESSION['admin_id'])) {
     header("Location: admin/dashboard.php");
     exit();
@@ -26,13 +76,13 @@ if (isset($_SESSION['admin_id'])) {
         <h2>Welcome Back</h2>
         <p>Enter your credentials to access the dashboard</p>
 
-        <?php if (isset($_GET['error'])): ?>
+        <?php if (isset($error_msg)): ?>
             <div class="alert alert-error">
-                <i class="fas fa-exclamation-circle"></i> <?php echo htmlspecialchars($_GET['error']); ?>
+                <i class="fas fa-exclamation-circle"></i> <?php echo htmlspecialchars($error_msg); ?>
             </div>
         <?php endif; ?>
 
-        <form action="admin/auth.php" method="POST">
+        <form action="" method="POST">
             <div class="form-group">
                 <label for="username">Username</label>
                 <input type="text" id="username" name="username" placeholder="admin" required>
