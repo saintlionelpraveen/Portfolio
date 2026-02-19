@@ -1,7 +1,9 @@
 -- database.sql
 
-CREATE DATABASE IF NOT EXISTS Praveen;
-USE Praveen;
+-- NOTE: On shared hosting, you likely cannot create a database script.
+-- Import the tables below into your existing database.
+-- CREATE DATABASE IF NOT EXISTS praveen;
+-- USE praveen;
 
 -- Admin Users Table
 CREATE TABLE IF NOT EXISTS admin_users (
