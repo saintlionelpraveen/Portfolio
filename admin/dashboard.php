@@ -95,11 +95,11 @@ function upload_image($file, $target_dir = "../uploads/")
 
     // Calculate new dimensions if resizing is needed
     if ($width > $max_width) {
-        $new_width = $max_width;
-        $new_height = $max_width / $ratio;
+        $new_width = (int) $max_width;
+        $new_height = (int) round($max_width / $ratio);
     } else {
-        $new_width = $width;
-        $new_height = $height;
+        $new_width = (int) $width;
+        $new_height = (int) $height;
     }
 
     // Create a new true color image
@@ -187,6 +187,19 @@ if (!in_array('description', $existing_cols)) {
 if (!in_array('tags', $existing_cols)) {
     $conn->query("ALTER TABLE skills ADD COLUMN tags VARCHAR(255) AFTER description");
 }
+
+// --- AUTO-MIGRATION: Ensure internships table exists ---
+$conn->query("
+    CREATE TABLE IF NOT EXISTS internships (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        company_name VARCHAR(100) NOT NULL,
+        role VARCHAR(100) NOT NULL,
+        duration VARCHAR(50) NOT NULL,
+        description TEXT,
+        company_logo VARCHAR(255),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+");
 
 // Handle Form Submissions
 $message = "";
@@ -620,7 +633,8 @@ $active_tab = isset($_GET['tab']) ? $_GET['tab'] : 'hero';
                                         </div>
                                     </td>
                                     <td style="font-size: 0.85rem; color: var(--text-light); max-width: 200px;">
-                                        <?php echo htmlspecialchars($skill['description'] ?? ''); ?></td>
+                                        <?php echo htmlspecialchars($skill['description'] ?? ''); ?>
+                                    </td>
                                     <td>
                                         <?php
                                         $skill_tags = array_filter(array_map('trim', explode(',', $skill['tags'] ?? '')));
