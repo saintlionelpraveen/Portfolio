@@ -356,27 +356,62 @@ h2 {
 }
 
 /* Skills */
+.skills-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1.5rem;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
 .skill-card {
     background: #fff;
     border: 1px solid var(--glass-border);
-    box-shadow: var(--glass-shadow);
-    color: var(--text-color);
     border-radius: 16px;
-    transition: 0.3s;
+    padding: 1.8rem 2rem;
+    transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .skill-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+    transform: translateY(-4px);
+    box-shadow: 0 16px 32px rgba(0, 0, 0, 0.06);
+    border-color: var(--accent-color);
+}
+
+.skill-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.8rem;
 }
 
 .skill-card h3 {
-    color: var(--text-color);
+    font-size: 1rem;
     font-weight: 600;
+    color: var(--text-color);
+    margin: 0;
+}
+
+.skill-percentage {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--accent-dark);
 }
 
 .progress-bar {
     background: #f1f5f9;
+    border-radius: 50px;
+    height: 10px;
+    overflow: hidden;
+    position: relative;
+}
+
+.progress {
+    height: 100%;
+    border-radius: 50px;
+    background: linear-gradient(90deg, var(--accent-color), var(--accent-dark));
+    width: 0%;
+    transition: width 1.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* Experience / Internship Cards */

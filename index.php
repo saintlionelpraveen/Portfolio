@@ -242,7 +242,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['send_message'])) {
                 while ($skill = $skills_query->fetch_assoc()):
                     ?>
                     <div class="skill-card fade-in">
-                        <h3><?php echo htmlspecialchars($skill['skill_name']); ?></h3>
+                        <div class="skill-header">
+                            <h3><?php echo htmlspecialchars($skill['skill_name']); ?></h3>
+                            <span class="skill-percentage">
+                                <?php echo $skill['percentage']; ?>%
+                            </span>
+                        </div>
                         <div class="progress-bar">
                             <div class="progress" data-width="<?php echo $skill['percentage']; ?>"></div>
                         </div>
