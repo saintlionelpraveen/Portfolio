@@ -273,37 +273,54 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['send_message'])) {
         <h2 class="fade-in">Featured Works</h2>
         <div class="projects-grid">
             <?php
-            $projects_query = $conn->query("SELECT * FROM projects ORDER BY created_at DESC");
+            $projects_query = $conn->query("SELECT *, YEAR(created_at) as project_year FROM projects ORDER BY created_at DESC");
             if ($projects_query && $projects_query->num_rows > 0):
                 while ($proj = $projects_query->fetch_assoc()):
                     ?>
                     <div class="project-card fade-in">
-                        <?php if ($proj['image']): ?>
-                            <img src="uploads/<?php echo $proj['image']; ?>" alt="<?php echo htmlspecialchars($proj['title']); ?>"
-                                class="project-img">
-                        <?php endif; ?>
-                        <h3><?php echo htmlspecialchars($proj['title']); ?></h3>
+                        <div class="project-icon-wrapper">
+                            <?php if ($proj['image']): ?>
+                                <img src="uploads/<?php echo $proj['image']; ?>"
+                                    alt="<?php echo htmlspecialchars($proj['title']); ?>">
+                            <?php else: ?>
+                                <i class="fas fa-cube" style="font-size: 2rem; color: var(--accent-dark);"></i>
+                            <?php endif; ?>
+                        </div>
+
+                        <div class="project-header">
+                            <h3><?php echo htmlspecialchars($proj['title']); ?></h3>
+                            <span class="project-year"><?php echo $proj['project_year']; ?></span>
+                        </div>
+
                         <p><?php echo htmlspecialchars($proj['description']); ?></p>
-                        <div style="margin-top: 1rem;">
+
+                        <div class="project-tags">
                             <?php
                             $techs = explode(',', $proj['tech_stack']);
                             foreach ($techs as $tech) {
-                                echo '<span style="background: #e0f2fe; padding: 0.2rem 0.8rem; border-radius: 50px; font-size: 0.8rem; margin-right: 0.5rem; color: #0284c7; font-weight: 600;">' . trim($tech) . '</span>';
+                                if (trim($tech)) {
+                                    echo '<span class="project-tag">' . htmlspecialchars(trim($tech)) . '</span>';
+                                }
                             }
                             ?>
                         </div>
+
                         <div class="project-links">
                             <?php if ($proj['github_link']): ?>
-                                <a href="<?php echo $proj['github_link']; ?>" target="_blank" class="btn">GitHub</a>
+                                <a href="<?php echo $proj['github_link']; ?>" target="_blank" class="project-link">
+                                    <i class="fab fa-github"></i> Code
+                                </a>
                             <?php endif; ?>
                             <?php if ($proj['demo_link']): ?>
-                                <a href="<?php echo $proj['demo_link']; ?>" target="_blank" class="btn">View Live</a>
+                                <a href="<?php echo $proj['demo_link']; ?>" target="_blank" class="project-link">
+                                    <i class="fas fa-external-link-alt"></i> Live Demo
+                                </a>
                             <?php endif; ?>
                         </div>
                     </div>
                 <?php endwhile;
             else: ?>
-                <p>Projects showcase coming soon.</p>
+                <p style="text-align: center; width: 100%; color: var(--text-light);">Projects showcase coming soon.</p>
             <?php endif; ?>
         </div>
     </section>
