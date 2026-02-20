@@ -116,20 +116,36 @@ $msg_sent = false;
 $msg_error = "";
 
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['send_message'])) {
-    $name = clean_input($_POST['name']);
-    $email = clean_input($_POST['email']);
-    $message = clean_input($_POST['message']);
+    $name = trim(strip_tags($_POST['name'] ?? ''));
+    $email = trim(strip_tags($_POST['email'] ?? ''));
+    $subject = trim(strip_tags($_POST['subject'] ?? 'New Portfolio Contact'));
+    $message = trim(strip_tags($_POST['message'] ?? ''));
 
-    if (!empty($name) && !empty($email) && !empty($message)) {
+    if (!empty($name) && !empty($email) && !empty($message) && filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        // 1. Save to DB
+        $db_name = $conn->real_escape_string($name);
+        $db_email = $conn->real_escape_string($email);
+        $db_msg = $conn->real_escape_string($message);
         $stmt = $conn->prepare("INSERT INTO messages (name, email, message) VALUES (?, ?, ?)");
-        $stmt->bind_param("sss", $name, $email, $message);
-        if ($stmt->execute()) {
-            $msg_sent = true;
-        } else {
-            $msg_error = "Error sending message.";
-        }
+        $stmt->bind_param("sss", $db_name, $db_email, $db_msg);
+        $db_ok = $stmt->execute();
+
+        // 2. Send email notification
+        $to = 'jaga03038@gmail.com';
+        $mail_subject = "[Portfolio Contact] " . $subject . " — from " . $name;
+        $mail_body = "You have a new message from your portfolio contact form.\n\n";
+        $mail_body .= "Name    : " . $name . "\n";
+        $mail_body .= "Email   : " . $email . "\n";
+        $mail_body .= "Subject : " . $subject . "\n\n";
+        $mail_body .= "Message :\n" . $message . "\n";
+        $mail_headers = "From: noreply@portfolio.local\r\n";
+        $mail_headers .= "Reply-To: " . $email . "\r\n";
+        $mail_headers .= "X-Mailer: PHP/" . phpversion();
+        @mail($to, $mail_subject, $mail_body, $mail_headers);
+
+        $msg_sent = true;
     } else {
-        $msg_error = "All fields are required.";
+        $msg_error = "Please fill all fields with a valid email.";
     }
 }
 ?>
@@ -565,31 +581,117 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['send_message'])) {
     <!-- Contact Section -->
     <section id="contact">
         <h2 class="fade-in">Let's Work Together</h2>
-        <div class="contact-form fade-in">
-            <?php if ($msg_sent): ?>
-                <p style="color: #10b981; text-align: center; margin-bottom: 1rem; font-weight: 600;">Message sent
-                    successfully!</p>
-            <?php elseif ($msg_error): ?>
-                <p style="color: #ef4444; text-align: center; margin-bottom: 1rem; font-weight: 600;">
-                    <?php echo $msg_error; ?>
-                </p>
-            <?php endif; ?>
-            <form method="POST" action="#contact">
-                <div class="form-group">
-                    <label>Name</label>
-                    <input type="text" name="name" required>
+        <p class="contact-subtitle fade-in">Have a project in mind or just want to say hello? I'd love to hear from you.
+        </p>
+        <div class="contact-wrapper fade-in">
+
+            <!-- LEFT: Info Panel -->
+            <div class="contact-info-panel">
+                <div class="contact-info-header">
+                    <div class="contact-availability">
+                        <span class="availability-dot"></span>
+                        Available for opportunities
+                    </div>
+                    <h3>Get In Touch</h3>
+                    <p>I'm currently open to freelance projects, full-time roles, and exciting collaborations. Let's
+                        build something great together.</p>
                 </div>
-                <div class="form-group">
-                    <label>Email</label>
-                    <input type="email" name="email" required>
+
+                <div class="contact-details">
+                    <div class="contact-detail-item">
+                        <div class="contact-detail-icon"><i class="fas fa-envelope"></i></div>
+                        <div>
+                            <span class="contact-detail-label">Email</span>
+                            <a href="mailto:jaga03038@gmail.com" class="contact-detail-val">jaga03038@gmail.com</a>
+                        </div>
+                    </div>
+                    <div class="contact-detail-item">
+                        <div class="contact-detail-icon"><i class="fas fa-map-marker-alt"></i></div>
+                        <div>
+                            <span class="contact-detail-label">Location</span>
+                            <span class="contact-detail-val">India</span>
+                        </div>
+                    </div>
+                    <div class="contact-detail-item">
+                        <div class="contact-detail-icon"><i class="fas fa-clock"></i></div>
+                        <div>
+                            <span class="contact-detail-label">Response Time</span>
+                            <span class="contact-detail-val">Within 24 hours</span>
+                        </div>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label>Message</label>
-                    <textarea name="message" rows="5" required></textarea>
-                </div>
-                <button type="submit" name="send_message" class="btn-primary"
-                    style="width: 100%; border: none; cursor: pointer;">Send Message</button>
-            </form>
+
+                <?php
+                $socials_contact = get_social_links();
+                if ($socials_contact): ?>
+                    <div class="contact-socials">
+                        <?php while ($sc = $socials_contact->fetch_assoc()): ?>
+                            <a href="<?php echo htmlspecialchars($sc['url']); ?>" target="_blank" class="contact-social-btn"
+                                title="<?php echo htmlspecialchars($sc['platform']); ?>">
+                                <i class="fab fa-<?php echo strtolower(htmlspecialchars($sc['platform'])); ?>"></i>
+                            </a>
+                        <?php endwhile; ?>
+                    </div>
+                <?php endif; ?>
+            </div>
+
+            <!-- RIGHT: Form Panel -->
+            <div class="contact-form-panel">
+                <?php if ($msg_sent): ?>
+                    <div class="contact-success">
+                        <div class="contact-success-icon"><i class="fas fa-check"></i></div>
+                        <h3>Message Sent!</h3>
+                        <p>Thanks for reaching out. I'll get back to you within 24 hours.</p>
+                    </div>
+                <?php else: ?>
+                    <?php if ($msg_error): ?>
+                        <div class="contact-error-banner"><i class="fas fa-exclamation-circle"></i>
+                            <?php echo htmlspecialchars($msg_error); ?></div>
+                    <?php endif; ?>
+                    <form method="POST" action="#contact" class="contact-form-inner" novalidate>
+                        <div class="contact-form-row">
+                            <div class="contact-field">
+                                <label for="cf-name">Your Name <span>*</span></label>
+                                <div class="contact-input-wrap">
+                                    <i class="fas fa-user"></i>
+                                    <input id="cf-name" type="text" name="name" placeholder="John Doe" required
+                                        value="<?php echo htmlspecialchars($_POST['name'] ?? ''); ?>">
+                                </div>
+                            </div>
+                            <div class="contact-field">
+                                <label for="cf-email">Email Address <span>*</span></label>
+                                <div class="contact-input-wrap">
+                                    <i class="fas fa-envelope"></i>
+                                    <input id="cf-email" type="email" name="email" placeholder="john@example.com" required
+                                        value="<?php echo htmlspecialchars($_POST['email'] ?? ''); ?>">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="contact-field">
+                            <label for="cf-subject">Subject</label>
+                            <div class="contact-input-wrap">
+                                <i class="fas fa-tag"></i>
+                                <input id="cf-subject" type="text" name="subject"
+                                    placeholder="Project Inquiry / Collaboration / Just Saying Hi"
+                                    value="<?php echo htmlspecialchars($_POST['subject'] ?? ''); ?>">
+                            </div>
+                        </div>
+                        <div class="contact-field">
+                            <label for="cf-message">Message <span>*</span></label>
+                            <div class="contact-input-wrap contact-textarea-wrap">
+                                <i class="fas fa-comment-dots"></i>
+                                <textarea id="cf-message" name="message" rows="5"
+                                    placeholder="Tell me about your project, timeline, and budget…"
+                                    required><?php echo htmlspecialchars($_POST['message'] ?? ''); ?></textarea>
+                            </div>
+                        </div>
+                        <button type="submit" name="send_message" class="contact-submit-btn">
+                            <span>Send Message</span>
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </form>
+                <?php endif; ?>
+            </div>
         </div>
     </section>
 
