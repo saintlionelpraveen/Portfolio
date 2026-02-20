@@ -256,156 +256,196 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['send_message'])) {
         <?php if (!empty($internships)):
             // Build per-fellowship lookup maps
             $fs_by_intern = $fw_by_intern = $fp_by_intern = [];
-            foreach ($fellowship_skills     as $r) { $fs_by_intern[$r['internship_id']][] = $r; }
-            foreach ($fellowship_frameworks as $r) { $fw_by_intern[$r['internship_id']][] = $r; }
-            foreach ($fellowship_projects   as $r) { $fp_by_intern[$r['internship_id']][] = $r; }
+            foreach ($fellowship_skills as $r) {
+                $fs_by_intern[$r['internship_id']][] = $r;
+            }
+            foreach ($fellowship_frameworks as $r) {
+                $fw_by_intern[$r['internship_id']][] = $r;
+            }
+            foreach ($fellowship_projects as $r) {
+                $fp_by_intern[$r['internship_id']][] = $r;
+            }
 
             foreach ($internships as $fidx => $intern):
-                $fid      = $intern['id'];
+                $fid = $intern['id'];
                 $f_skills = $fs_by_intern[$fid] ?? [];
                 $f_fworks = $fw_by_intern[$fid] ?? [];
-                $f_projs  = $fp_by_intern[$fid] ?? [];
+                $f_projs = $fp_by_intern[$fid] ?? [];
                 $has_data = !empty($f_skills) || !empty($f_fworks) || !empty($f_projs);
-                $uid      = 'f' . $fid; // unique prefix per entry
-        ?>
-        <div class="fellowship-hero-row fade-in<?php echo $fidx % 2 === 1 ? ' fellowship-hero-row--reverse' : ''; ?>">
+                $uid = 'f' . $fid; // unique prefix per entry
+                ?>
+                <div class="fellowship-hero-row fade-in<?php echo $fidx % 2 === 1 ? ' fellowship-hero-row--reverse' : ''; ?>">
 
-            <!-- LEFT: Fellowship Image -->
-            <div class="fellowship-img-col">
-                <div class="fellowship-img-wrap">
-                    <?php if (!empty($intern['fellowship_image'])): ?>
-                        <img src="uploads/<?php echo htmlspecialchars($intern['fellowship_image']); ?>"
-                             alt="<?php echo htmlspecialchars($intern['company_name']); ?> fellowship"
-                             class="fellowship-img">
-                    <?php elseif (!empty($intern['company_logo'])): ?>
-                        <img src="uploads/<?php echo htmlspecialchars($intern['company_logo']); ?>"
-                             alt="<?php echo htmlspecialchars($intern['company_name']); ?>"
-                             class="fellowship-img fellowship-img--logo">
-                    <?php else: ?>
-                        <div class="fellowship-img-placeholder">
-                            <i class="fas fa-graduation-cap"></i>
-                        </div>
-                    <?php endif; ?>
-                    <div class="fellowship-img-badge">
-                        <i class="fas fa-star"></i>
-                        <span>Fellowship</span>
-                    </div>
-                </div>
-            </div>
+                    <!-- LEFT: Fellowship Image (hero-visual style) -->
+                    <div class="fellowship-img-col">
+                        <div class="fellowship-visual">
+                            <div class="fellowship-bg-blob"></div>
 
-            <!-- RIGHT: Content -->
-            <div class="fellowship-content-col">
-                <div class="fellowship-meta-row">
-                    <?php if (!empty($intern['company_logo'])): ?>
-                        <img src="uploads/<?php echo htmlspecialchars($intern['company_logo']); ?>"
-                             class="fellowship-company-logo" alt="logo">
-                    <?php endif; ?>
-                    <span class="fellowship-company-name"><?php echo htmlspecialchars($intern['company_name']); ?></span>
-                    <span class="fellowship-duration-pill"><i class="fas fa-calendar-alt"></i> <?php echo htmlspecialchars($intern['duration']); ?></span>
-                </div>
-
-                <h3 class="fellowship-role"><?php echo htmlspecialchars($intern['role']); ?></h3>
-
-                <?php if (!empty($intern['description'])): ?>
-                <p class="fellowship-description"><?php echo nl2br(htmlspecialchars($intern['description'])); ?></p>
-                <?php endif; ?>
-
-                <?php if ($has_data): ?>
-                <!-- Filter Tabs -->
-                <div class="fellowship-tabs" id="tabs-<?php echo $uid; ?>">
-                    <button class="ftab active" data-group="<?php echo $uid; ?>" data-target="<?php echo $uid; ?>-skills">
-                        <span class="ftab-icon">&#9889;</span><span>Skills</span>
-                        <span class="ftab-count"><?php echo count($f_skills); ?></span>
-                    </button>
-                    <button class="ftab" data-group="<?php echo $uid; ?>" data-target="<?php echo $uid; ?>-frameworks">
-                        <span class="ftab-icon">&#128193;</span><span>Frameworks</span>
-                        <span class="ftab-count"><?php echo count($f_fworks); ?></span>
-                    </button>
-                    <button class="ftab" data-group="<?php echo $uid; ?>" data-target="<?php echo $uid; ?>-projects">
-                        <span class="ftab-icon">&#128187;</span><span>Projects</span>
-                        <span class="ftab-count"><?php echo count($f_projs); ?></span>
-                    </button>
-                </div>
-
-                <!-- SKILLS PANEL -->
-                <div class="ftab-panel active" id="<?php echo $uid; ?>-skills">
-                    <?php if (!empty($f_skills)): ?>
-                    <div class="fs-skills-grid">
-                        <?php foreach ($f_skills as $fs):
-                            $prof_pct   = ['Beginner'=>33,'Intermediate'=>66,'Advanced'=>100][$fs['proficiency']] ?? 33;
-                            $prof_color = ['Beginner'=>'#f59e0b','Intermediate'=>'#3b82f6','Advanced'=>'#10b981'][$fs['proficiency']] ?? '#94a3b8';
-                        ?>
-                        <div class="fs-skill-card">
-                            <div class="fs-skill-glow" style="--glow:<?php echo $prof_color; ?>;">
-                                <div class="fs-skill-top">
-                                    <span class="fs-skill-name"><?php echo htmlspecialchars($fs['skill_name']); ?></span>
-                                    <span class="fs-prof-badge" style="background:<?php echo $prof_color; ?>20;color:<?php echo $prof_color; ?>;border:1px solid <?php echo $prof_color; ?>40;"><?php echo $fs['proficiency']; ?></span>
+                            <?php if (!empty($intern['fellowship_image'])): ?>
+                                <img src="uploads/<?php echo htmlspecialchars($intern['fellowship_image']); ?>"
+                                    alt="<?php echo htmlspecialchars($intern['company_name']); ?> fellowship"
+                                    class="fellowship-photo">
+                            <?php elseif (!empty($intern['company_logo'])): ?>
+                                <img src="uploads/<?php echo htmlspecialchars($intern['company_logo']); ?>"
+                                    alt="<?php echo htmlspecialchars($intern['company_name']); ?>"
+                                    class="fellowship-photo fellowship-photo--logo">
+                            <?php else: ?>
+                                <div class="fellowship-photo fellowship-photo--placeholder">
+                                    <i class="fas fa-graduation-cap"></i>
                                 </div>
-                                <?php if (!empty($fs['description'])): ?>
-                                <p class="fs-skill-desc"><?php echo htmlspecialchars($fs['description']); ?></p>
-                                <?php endif; ?>
-                                <div class="fs-prof-bar"><div class="fs-prof-fill" style="width:<?php echo $prof_pct; ?>%;background:<?php echo $prof_color; ?>;box-shadow:0 0 8px <?php echo $prof_color; ?>60;"></div></div>
+                            <?php endif; ?>
+
+                            <!-- Floating Badges — Software Engineer, Fellows, T4GC Family -->
+                            <div class="fellowship-float-badge fbadge-1">
+                                <i class="fas fa-laptop-code"></i> Software Engineer
+                            </div>
+                            <div class="fellowship-float-badge fbadge-2">
+                                <i class="fas fa-users"></i> Fellows
+                            </div>
+                            <div class="fellowship-float-badge fbadge-3">
+                                <i class="fas fa-heart"></i> T4GC Family
                             </div>
                         </div>
-                        <?php endforeach; ?>
                     </div>
-                    <?php else: ?><p class="ftab-empty">No skills added yet.</p><?php endif; ?>
-                </div>
 
-                <!-- FRAMEWORKS PANEL -->
-                <div class="ftab-panel" id="<?php echo $uid; ?>-frameworks">
-                    <?php if (!empty($f_fworks)): ?>
-                    <div class="fs-fw-grid">
-                        <?php foreach ($f_fworks as $fw):
-                            $cat_colors=['Frontend'=>['bg'=>'#fef3c7','dot'=>'#f59e0b'],'Backend'=>['bg'=>'#dbeafe','dot'=>'#3b82f6'],'Mobile'=>['bg'=>'#fce7f3','dot'=>'#ec4899'],'DevOps'=>['bg'=>'#dcfce7','dot'=>'#22c55e'],'Database'=>['bg'=>'#ede9fe','dot'=>'#8b5cf6'],'AI/ML'=>['bg'=>'#fee2e2','dot'=>'#ef4444'],'Other'=>['bg'=>'#f1f5f9','dot'=>'#64748b']];
-                            $cat=$fw['category']??'Other'; $cc=$cat_colors[$cat]??$cat_colors['Other'];
-                        ?>
-                        <div class="fs-fw-card">
-                            <div class="fs-fw-terminal">
-                                <div class="fs-fw-dots"><span></span><span></span><span></span></div>
-                                <div class="fs-fw-category" style="background:<?php echo $cc['bg']; ?>;color:<?php echo $cc['dot']; ?>;"><span class="fs-fw-cat-dot" style="background:<?php echo $cc['dot']; ?>"></span><?php echo htmlspecialchars($cat); ?></div>
-                            </div>
-                            <div class="fs-fw-body">
-                                <div class="fs-fw-name"><?php echo htmlspecialchars($fw['framework_name']); ?></div>
-                                <?php if (!empty($fw['description'])): ?><p class="fs-fw-desc"><?php echo htmlspecialchars($fw['description']); ?></p><?php endif; ?>
-                            </div>
+
+                    <!-- RIGHT: Content -->
+                    <div class="fellowship-content-col">
+                        <div class="fellowship-meta-row">
+                            <?php if (!empty($intern['company_logo'])): ?>
+                                <img src="uploads/<?php echo htmlspecialchars($intern['company_logo']); ?>"
+                                    class="fellowship-company-logo" alt="logo">
+                            <?php endif; ?>
+                            <span
+                                class="fellowship-company-name"><?php echo htmlspecialchars($intern['company_name']); ?></span>
+                            <span class="fellowship-duration-pill"><i class="fas fa-calendar-alt"></i>
+                                <?php echo htmlspecialchars($intern['duration']); ?></span>
                         </div>
-                        <?php endforeach; ?>
-                    </div>
-                    <?php else: ?><p class="ftab-empty">No frameworks added yet.</p><?php endif; ?>
-                </div>
 
-                <!-- PROJECTS PANEL -->
-                <div class="ftab-panel" id="<?php echo $uid; ?>-projects">
-                    <?php if (!empty($f_projs)): ?>
-                    <div class="fs-proj-list">
-                        <?php foreach ($f_projs as $idx => $fp): ?>
-                        <div class="fs-proj-row">
-                            <div class="fs-proj-num">0<?php echo $idx+1; ?></div>
-                            <div class="fs-proj-content">
-                                <div class="fs-proj-top">
-                                    <h4 class="fs-proj-name"><?php echo htmlspecialchars($fp['project_name']); ?></h4>
-                                    <div class="fs-proj-actions">
-                                        <?php if (!empty($fp['github_link'])): ?><a href="<?php echo htmlspecialchars($fp['github_link']); ?>" target="_blank" class="fs-proj-gh"><i class="fab fa-github"></i> GitHub</a><?php endif; ?>
+                        <h3 class="fellowship-role"><?php echo htmlspecialchars($intern['role']); ?></h3>
+
+                        <?php if (!empty($intern['description'])): ?>
+                            <p class="fellowship-description"><?php echo nl2br(htmlspecialchars($intern['description'])); ?></p>
+                        <?php endif; ?>
+
+                        <?php if ($has_data): ?>
+                            <!-- Filter Tabs -->
+                            <div class="fellowship-tabs" id="tabs-<?php echo $uid; ?>">
+                                <button class="ftab active" data-group="<?php echo $uid; ?>"
+                                    data-target="<?php echo $uid; ?>-skills">
+                                    <span class="ftab-icon">&#9889;</span><span>Skills</span>
+                                    <span class="ftab-count"><?php echo count($f_skills); ?></span>
+                                </button>
+                                <button class="ftab" data-group="<?php echo $uid; ?>" data-target="<?php echo $uid; ?>-frameworks">
+                                    <span class="ftab-icon">&#128193;</span><span>Frameworks</span>
+                                    <span class="ftab-count"><?php echo count($f_fworks); ?></span>
+                                </button>
+                                <button class="ftab" data-group="<?php echo $uid; ?>" data-target="<?php echo $uid; ?>-projects">
+                                    <span class="ftab-icon">&#128187;</span><span>Projects</span>
+                                    <span class="ftab-count"><?php echo count($f_projs); ?></span>
+                                </button>
+                            </div>
+
+                            <!-- SKILLS PANEL -->
+                            <div class="ftab-panel active" id="<?php echo $uid; ?>-skills">
+                                <?php if (!empty($f_skills)): ?>
+                                    <div class="fs-skills-grid">
+                                        <?php foreach ($f_skills as $fs):
+                                            $prof_pct = ['Beginner' => 33, 'Intermediate' => 66, 'Advanced' => 100][$fs['proficiency']] ?? 33;
+                                            $prof_color = ['Beginner' => '#f59e0b', 'Intermediate' => '#3b82f6', 'Advanced' => '#10b981'][$fs['proficiency']] ?? '#94a3b8';
+                                            ?>
+                                            <div class="fs-skill-card">
+                                                <div class="fs-skill-glow" style="--glow:<?php echo $prof_color; ?>;">
+                                                    <div class="fs-skill-top">
+                                                        <span
+                                                            class="fs-skill-name"><?php echo htmlspecialchars($fs['skill_name']); ?></span>
+                                                        <span class="fs-prof-badge"
+                                                            style="background:<?php echo $prof_color; ?>20;color:<?php echo $prof_color; ?>;border:1px solid <?php echo $prof_color; ?>40;"><?php echo $fs['proficiency']; ?></span>
+                                                    </div>
+                                                    <?php if (!empty($fs['description'])): ?>
+                                                        <p class="fs-skill-desc"><?php echo htmlspecialchars($fs['description']); ?></p>
+                                                    <?php endif; ?>
+                                                    <div class="fs-prof-bar">
+                                                        <div class="fs-prof-fill"
+                                                            style="width:<?php echo $prof_pct; ?>%;background:<?php echo $prof_color; ?>;box-shadow:0 0 8px <?php echo $prof_color; ?>60;">
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        <?php endforeach; ?>
                                     </div>
-                                </div>
-                                <?php if (!empty($fp['description'])): ?><p class="fs-proj-desc"><?php echo htmlspecialchars($fp['description']); ?></p><?php endif; ?>
-                                <?php if (!empty($fp['tech_used'])): ?>
-                                <div class="fs-proj-techs">
-                                    <?php foreach (array_filter(array_map('trim',explode(',',$fp['tech_used']))) as $t): ?><span class="fs-proj-tech"><?php echo htmlspecialchars($t); ?></span><?php endforeach; ?>
-                                </div>
-                                <?php endif; ?>
+                                <?php else: ?>
+                                    <p class="ftab-empty">No skills added yet.</p><?php endif; ?>
                             </div>
-                        </div>
-                        <?php endforeach; ?>
-                    </div>
-                    <?php else: ?><p class="ftab-empty">No projects added yet.</p><?php endif; ?>
-                </div>
-                <?php endif; // has_data ?>
 
-            </div><!-- .fellowship-content-col -->
-        </div><!-- .fellowship-hero-row -->
-        <?php endforeach; endif; ?>
+                            <!-- FRAMEWORKS PANEL -->
+                            <div class="ftab-panel" id="<?php echo $uid; ?>-frameworks">
+                                <?php if (!empty($f_fworks)): ?>
+                                    <div class="fs-fw-grid">
+                                        <?php foreach ($f_fworks as $fw):
+                                            $cat_colors = ['Frontend' => ['bg' => '#fef3c7', 'dot' => '#f59e0b'], 'Backend' => ['bg' => '#dbeafe', 'dot' => '#3b82f6'], 'Mobile' => ['bg' => '#fce7f3', 'dot' => '#ec4899'], 'DevOps' => ['bg' => '#dcfce7', 'dot' => '#22c55e'], 'Database' => ['bg' => '#ede9fe', 'dot' => '#8b5cf6'], 'AI/ML' => ['bg' => '#fee2e2', 'dot' => '#ef4444'], 'Other' => ['bg' => '#f1f5f9', 'dot' => '#64748b']];
+                                            $cat = $fw['category'] ?? 'Other';
+                                            $cc = $cat_colors[$cat] ?? $cat_colors['Other'];
+                                            ?>
+                                            <div class="fs-fw-card">
+                                                <div class="fs-fw-terminal">
+                                                    <div class="fs-fw-dots"><span></span><span></span><span></span></div>
+                                                    <div class="fs-fw-category"
+                                                        style="background:<?php echo $cc['bg']; ?>;color:<?php echo $cc['dot']; ?>;"><span
+                                                            class="fs-fw-cat-dot"
+                                                            style="background:<?php echo $cc['dot']; ?>"></span><?php echo htmlspecialchars($cat); ?>
+                                                    </div>
+                                                </div>
+                                                <div class="fs-fw-body">
+                                                    <div class="fs-fw-name"><?php echo htmlspecialchars($fw['framework_name']); ?></div>
+                                                    <?php if (!empty($fw['description'])): ?>
+                                                        <p class="fs-fw-desc"><?php echo htmlspecialchars($fw['description']); ?></p>
+                                                    <?php endif; ?>
+                                                </div>
+                                            </div>
+                                        <?php endforeach; ?>
+                                    </div>
+                                <?php else: ?>
+                                    <p class="ftab-empty">No frameworks added yet.</p><?php endif; ?>
+                            </div>
+
+                            <!-- PROJECTS PANEL -->
+                            <div class="ftab-panel" id="<?php echo $uid; ?>-projects">
+                                <?php if (!empty($f_projs)): ?>
+                                    <div class="fs-proj-list">
+                                        <?php foreach ($f_projs as $idx => $fp): ?>
+                                            <div class="fs-proj-row">
+                                                <div class="fs-proj-num">0<?php echo $idx + 1; ?></div>
+                                                <div class="fs-proj-content">
+                                                    <div class="fs-proj-top">
+                                                        <h4 class="fs-proj-name"><?php echo htmlspecialchars($fp['project_name']); ?></h4>
+                                                        <div class="fs-proj-actions">
+                                                            <?php if (!empty($fp['github_link'])): ?><a
+                                                                    href="<?php echo htmlspecialchars($fp['github_link']); ?>" target="_blank"
+                                                                    class="fs-proj-gh"><i class="fab fa-github"></i> GitHub</a><?php endif; ?>
+                                                        </div>
+                                                    </div>
+                                                    <?php if (!empty($fp['description'])): ?>
+                                                        <p class="fs-proj-desc"><?php echo htmlspecialchars($fp['description']); ?></p>
+                                                    <?php endif; ?>
+                                                    <?php if (!empty($fp['tech_used'])): ?>
+                                                        <div class="fs-proj-techs">
+                                                            <?php foreach (array_filter(array_map('trim', explode(',', $fp['tech_used']))) as $t): ?><span
+                                                                    class="fs-proj-tech"><?php echo htmlspecialchars($t); ?></span><?php endforeach; ?>
+                                                        </div>
+                                                    <?php endif; ?>
+                                                </div>
+                                            </div>
+                                        <?php endforeach; ?>
+                                    </div>
+                                <?php else: ?>
+                                    <p class="ftab-empty">No projects added yet.</p><?php endif; ?>
+                            </div>
+                        <?php endif; // has_data ?>
+
+                    </div><!-- .fellowship-content-col -->
+                </div><!-- .fellowship-hero-row -->
+            <?php endforeach; endif; ?>
     </section>
 
     <!-- Skills Section -->
