@@ -456,9 +456,28 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['send_message'])) {
             $skills_query = $conn->query("SELECT * FROM skills ORDER BY percentage DESC");
             if ($skills_query && $skills_query->num_rows > 0):
                 while ($skill = $skills_query->fetch_assoc()):
+                    // Assign palette based on proficiency
+                    $pct = (int) $skill['percentage'];
+                    if ($pct >= 80) {
+                        $bg = '#d1fae5';
+                        $bar = '#059669';
+                        $label_c = '#065f46';
+                    } elseif ($pct >= 60) {
+                        $bg = '#dbeafe';
+                        $bar = '#3b82f6';
+                        $label_c = '#1e40af';
+                    } elseif ($pct >= 40) {
+                        $bg = '#fef9c3';
+                        $bar = '#ca8a04';
+                        $label_c = '#713f12';
+                    } else {
+                        $bg = '#ffe4e6';
+                        $bar = '#f43f5e';
+                        $label_c = '#be123c';
+                    }
                     ?>
-                    <div class="skill-card fade-in">
-                        <span class="skill-label">Expertise</span>
+                    <div class="skill-card" style="--card-bg:<?php echo $bg; ?>;--bar-color:<?php echo $bar; ?>;">
+                        <span class="skill-label" style="color:<?php echo $label_c; ?>;">Expertise</span>
                         <h3><?php echo htmlspecialchars($skill['skill_name']); ?></h3>
                         <?php if (!empty($skill['description'])): ?>
                             <p class="skill-desc"><?php echo htmlspecialchars($skill['description']); ?></p>
@@ -473,7 +492,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['send_message'])) {
                                 ?>
                             </div>
                         <?php endif; ?>
-                        <span class="skill-percentage"><?php echo $skill['percentage']; ?>% Proficiency</span>
+                        <div class="skill-progress-wrap">
+                            <div class="skill-progress-bar" style="width:<?php echo $pct; ?>%;background:<?php echo $bar; ?>;">
+                            </div>
+                        </div>
+                        <span class="skill-percentage"><?php echo $pct; ?>% Proficiency</span>
                     </div>
                 <?php endwhile;
             else: ?>

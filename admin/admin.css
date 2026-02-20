@@ -153,6 +153,30 @@ tr:hover td {
     box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
 }
 
+.btn-edit {
+    background: #eff6ff;
+    color: #2563eb;
+    border: 1px solid #bfdbfe;
+    cursor: pointer;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: 0.2s;
+}
+
+.btn-edit:hover {
+    background: #2563eb;
+    color: #fff;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+}
+
+/* Inline edit row highlight */
+tr[id] td {
+    border-top: 2px solid #bfdbfe;
+    border-bottom: 2px solid #bfdbfe;
+    background: #f0f9ff;
+}
+
 /* Alerts */
 .alert {
     padding: 1rem 1.5rem;

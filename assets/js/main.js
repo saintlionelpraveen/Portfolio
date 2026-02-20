@@ -12,31 +12,33 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Intersection Observer for Fade-in Animations
-    const observerOptions = {
-        threshold: 0.1,
-        rootMargin: "0px"
-    };
-
+    // Intersection Observer for general fade-in animations
     const observer = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
                 entry.target.classList.add('visible');
-
-                // Animate Progress Bars if it's a skill card
-                if (entry.target.classList.contains('skill-card')) {
-                    const progressBar = entry.target.querySelector('.progress');
-                    const width = progressBar.getAttribute('data-width');
-                    progressBar.style.width = width + '%';
-                }
-
                 observer.unobserve(entry.target);
             }
         });
-    }, observerOptions);
+    }, { threshold: 0.08, rootMargin: '0px 0px -40px 0px' });
 
-    const fadeElements = document.querySelectorAll('.fade-in, .skill-card');
-    fadeElements.forEach(el => observer.observe(el));
+    document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+
+    // Skills section: show ALL cards the moment the section enters the viewport
+    const skillsSection = document.getElementById('skills');
+    if (skillsSection) {
+        const skillsObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    document.querySelectorAll('.skill-card').forEach((card, i) => {
+                        setTimeout(() => card.classList.add('visible'), i * 80);
+                    });
+                    skillsObserver.disconnect();
+                }
+            });
+        }, { threshold: 0.05, rootMargin: '0px 0px 0px 0px' });
+        skillsObserver.observe(skillsSection);
+    }
 
     // Parallax Effect for floating elements (if any)
     document.addEventListener('mousemove', (e) => {
