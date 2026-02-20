@@ -103,4 +103,4 @@ DELETE FROM admin_users WHERE username = 'admin';
 -- Insert default admin user (password: admin123)
 INSERT INTO admin_users (username, password) VALUES 
 ('admin', 'admin123');
--- Note: Storing passwords in plain text is not recommended for high security environments.
+-- This application uses plain text passwords for admin login.
