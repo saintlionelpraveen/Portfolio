@@ -30,8 +30,14 @@ CREATE TABLE IF NOT EXISTS skills (
     id INT AUTO_INCREMENT PRIMARY KEY,
     skill_name VARCHAR(50) NOT NULL,
     percentage INT NOT NULL CHECK (percentage BETWEEN 0 AND 100),
+    description TEXT,
+    tags VARCHAR(255),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Migration: Add description and tags columns if they don't exist
+ALTER TABLE skills ADD COLUMN IF NOT EXISTS description TEXT AFTER percentage;
+ALTER TABLE skills ADD COLUMN IF NOT EXISTS tags VARCHAR(255) AFTER description;
 
 -- About Table
 CREATE TABLE IF NOT EXISTS about (

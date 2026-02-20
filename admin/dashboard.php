@@ -247,9 +247,11 @@ if (isset($_POST['update_about'])) {
 if (isset($_POST['add_skill'])) {
     $name = clean_input($_POST['skill_name']);
     $percentage = (int) $_POST['skill_percentage'];
+    $description = clean_input($_POST['skill_description'] ?? '');
+    $tags = clean_input($_POST['skill_tags'] ?? '');
 
-    $stmt = $conn->prepare("INSERT INTO skills (skill_name, percentage) VALUES (?, ?)");
-    $stmt->bind_param("si", $name, $percentage);
+    $stmt = $conn->prepare("INSERT INTO skills (skill_name, percentage, description, tags) VALUES (?, ?, ?, ?)");
+    $stmt->bind_param("siss", $name, $percentage, $description, $tags);
     if ($stmt->execute()) {
         $message = "Skill added.";
     } else {
@@ -548,17 +550,31 @@ $active_tab = isset($_GET['tab']) ? $_GET['tab'] : 'hero';
         <?php if ($active_tab == 'skills'): ?>
             <div class="admin-card fade-in">
                 <h2><i class="fas fa-code"></i> Manage Skills</h2>
-                <form method="POST" style="display: flex; gap: 1rem; align-items: flex-end; flex-wrap: wrap;">
-                    <div class="form-group" style="flex: 2; min-width: 200px;">
-                        <label>Skill Name</label>
-                        <input type="text" name="skill_name" placeholder="e.g. React" required>
+                <form method="POST">
+                    <div style="display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem;">
+                        <div class="form-group" style="flex: 2; min-width: 200px;">
+                            <label>Skill Name</label>
+                            <input type="text" name="skill_name" placeholder="e.g. React" required>
+                        </div>
+                        <div class="form-group" style="flex: 1; min-width: 120px;">
+                            <label>Percentage (%)</label>
+                            <input type="number" name="skill_percentage" min="0" max="100" placeholder="85" required>
+                        </div>
                     </div>
-                    <div class="form-group" style="flex: 1; min-width: 150px;">
-                        <label>Percentage (%)</label>
-                        <input type="number" name="skill_percentage" min="0" max="100" placeholder="85" required>
+                    <div class="form-group" style="margin-bottom: 1rem;">
+                        <label>Description</label>
+                        <textarea name="skill_description" rows="2"
+                            placeholder="Brief description of your expertise..."></textarea>
                     </div>
-                    <div class="form-group">
-                        <button type="submit" name="add_skill" class="btn-primary">Add Skill</button>
+                    <div style="display: flex; gap: 1rem; align-items: flex-end; flex-wrap: wrap;">
+                        <div class="form-group" style="flex: 2; min-width: 200px;">
+                            <label>Tags <span style="font-weight: normal; color: var(--text-light);">(comma
+                                    separated)</span></label>
+                            <input type="text" name="skill_tags" placeholder="e.g. Framework, CMS, Backend">
+                        </div>
+                        <div class="form-group">
+                            <button type="submit" name="add_skill" class="btn-primary">Add Skill</button>
+                        </div>
                     </div>
                 </form>
 
@@ -568,6 +584,8 @@ $active_tab = isset($_GET['tab']) ? $_GET['tab'] : 'hero';
                             <tr>
                                 <th>Skill</th>
                                 <th>Percentage</th>
+                                <th>Description</th>
+                                <th>Tags</th>
                                 <th>Action</th>
                             </tr>
                         </thead>
@@ -585,6 +603,16 @@ $active_tab = isset($_GET['tab']) ? $_GET['tab'] : 'hero';
                                             </div>
                                             <span style="font-size: 0.9rem;"><?php echo $skill['percentage']; ?>%</span>
                                         </div>
+                                    </td>
+                                    <td style="font-size: 0.85rem; color: var(--text-light); max-width: 200px;">
+                                        <?php echo htmlspecialchars($skill['description'] ?? ''); ?></td>
+                                    <td>
+                                        <?php
+                                        $skill_tags = array_filter(array_map('trim', explode(',', $skill['tags'] ?? '')));
+                                        foreach ($skill_tags as $tag) {
+                                            echo '<span style="display:inline-block; padding:0.2rem 0.5rem; background:#e0f2fe; color:#0284c7; border-radius:4px; font-size:0.72rem; font-weight:600; margin:0.15rem;">' . htmlspecialchars($tag) . '</span>';
+                                        }
+                                        ?>
                                     </td>
                                     <td><a href="?tab=skills&delete_skill=<?php echo $skill['id']; ?>" class="btn-sm btn-danger"
                                             onclick="return confirm('Delete this skill?')"><i class="fas fa-trash"></i></a></td>

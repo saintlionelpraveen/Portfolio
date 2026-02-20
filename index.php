@@ -244,6 +244,19 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['send_message'])) {
                     <div class="skill-card fade-in">
                         <span class="skill-label">Expertise</span>
                         <h3><?php echo htmlspecialchars($skill['skill_name']); ?></h3>
+                        <?php if (!empty($skill['description'])): ?>
+                            <p class="skill-desc"><?php echo htmlspecialchars($skill['description']); ?></p>
+                        <?php endif; ?>
+                        <?php if (!empty($skill['tags'])): ?>
+                            <div class="skill-tags">
+                                <?php
+                                $stags = array_filter(array_map('trim', explode(',', $skill['tags'])));
+                                foreach ($stags as $stag) {
+                                    echo '<span class="skill-tag">' . htmlspecialchars($stag) . '</span>';
+                                }
+                                ?>
+                            </div>
+                        <?php endif; ?>
                         <span class="skill-percentage"><?php echo $skill['percentage']; ?>% Proficiency</span>
                     </div>
                 <?php endwhile;
