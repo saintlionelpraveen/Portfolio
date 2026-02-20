@@ -61,19 +61,29 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // ---- Fellowship Filter Tabs ----
-    const ftabs = document.querySelectorAll('.ftab');
-    const fpanels = document.querySelectorAll('.ftab-panel');
-
-    ftabs.forEach(tab => {
+    // ---- Fellowship Filter Tabs (per-fellowship group) ----
+    document.querySelectorAll('.ftab').forEach(tab => {
         tab.addEventListener('click', () => {
-            // Deactivate all tabs and panels
-            ftabs.forEach(t => t.classList.remove('active'));
-            fpanels.forEach(p => p.classList.remove('active'));
+            const group = tab.dataset.group;
 
-            // Activate clicked tab and matching panel
+            if (group) {
+                // Scope to this fellowship's group only
+                document.querySelectorAll(`.ftab[data-group="${group}"]`).forEach(t => t.classList.remove('active'));
+                // Hide all panels belonging to this group
+                // Panels are siblings: their IDs start with group prefix
+                const container = tab.closest('.fellowship-content-col');
+                if (container) {
+                    container.querySelectorAll('.ftab-panel').forEach(p => p.classList.remove('active'));
+                }
+            } else {
+                // Legacy fallback: global deactivate
+                document.querySelectorAll('.ftab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.ftab-panel').forEach(p => p.classList.remove('active'));
+            }
+
             tab.classList.add('active');
-            const target = document.getElementById(tab.dataset.target);
+            const targetId = tab.dataset.target;
+            const target = document.getElementById(targetId);
             if (target) target.classList.add('active');
         });
     });

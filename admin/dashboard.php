@@ -235,6 +235,14 @@ $conn->query("
     )
 ");
 
+// --- AUTO-MIGRATION: fellowship_image column ---
+$fi_cols = $conn->query("SHOW COLUMNS FROM internships");
+$fi_existing = [];
+if ($fi_cols) { while ($c = $fi_cols->fetch_assoc()) { $fi_existing[] = $c['Field']; } }
+if (!in_array('fellowship_image', $fi_existing)) {
+    $conn->query("ALTER TABLE internships ADD COLUMN fellowship_image VARCHAR(255) AFTER company_logo");
+}
+
 // Handle Form Submissions
 $message = "";
 $error = "";
@@ -387,6 +395,7 @@ if (isset($_POST['add_internship'])) {
     $duration = clean_input($_POST['duration']);
     $desc = clean_input($_POST['description']);
     $logo_path = '';
+    $fi_path = '';
 
     if (!empty($_FILES['company_logo']['name'])) {
         $upload_result = upload_image($_FILES['company_logo']);
@@ -397,9 +406,18 @@ if (isset($_POST['add_internship'])) {
         }
     }
 
+    if (empty($error) && !empty($_FILES['fellowship_image']['name'])) {
+        $upload_result2 = upload_image($_FILES['fellowship_image']);
+        if (isset($upload_result2['success'])) {
+            $fi_path = $upload_result2['success'];
+        } else {
+            $error = $upload_result2['error'];
+        }
+    }
+
     if (empty($error)) {
-        $stmt = $conn->prepare("INSERT INTO internships (company_name, role, duration, description, company_logo) VALUES (?, ?, ?, ?, ?)");
-        $stmt->bind_param("sssss", $company, $role, $duration, $desc, $logo_path);
+        $stmt = $conn->prepare("INSERT INTO internships (company_name, role, duration, description, company_logo, fellowship_image) VALUES (?, ?, ?, ?, ?, ?)");
+        $stmt->bind_param("ssssss", $company, $role, $duration, $desc, $logo_path, $fi_path);
         if ($stmt->execute()) {
             $message = "Fellowship entry added.";
         } else {
@@ -871,8 +889,12 @@ $active_tab = isset($_GET['tab']) ? $_GET['tab'] : 'hero';
                                 <textarea name="description" rows="3" placeholder="Brief overview of the fellowship..."></textarea>
                             </div>
                             <div class="form-group">
-                                <label>Company Logo <small style="font-weight:normal;color:var(--text-light);">(optional)</small></label>
-                                <input type="file" name="company_logo">
+                                <label>Company Logo <small style="font-weight:normal;color:var(--text-light);">(optional, shown in row header)</small></label>
+                                <input type="file" name="company_logo" accept="image/*">
+                            </div>
+                            <div class="form-group">
+                                <label>Fellowship Image <small style="font-weight:normal;color:var(--text-light);">(hero image shown on front-end, optional)</small></label>
+                                <input type="file" name="fellowship_image" accept="image/*">
                             </div>
                             <button type="submit" name="add_internship" class="btn-primary"><i class="fas fa-plus"></i> Add Fellowship</button>
                         </form>
