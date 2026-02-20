@@ -986,10 +986,9 @@ footer {
    ======================================== */
 .fs-skills-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-    gap: 1.4rem;
-    max-width: 1400px;
-    margin: 0 auto;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 1.2rem;
+    width: 100%;
 }
 
 .fs-skill-card {
@@ -1087,10 +1086,9 @@ footer {
    ======================================== */
 .fs-fw-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-    gap: 1.4rem;
-    max-width: 1400px;
-    margin: 0 auto;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1.2rem;
+    width: 100%;
 }
 
 .fs-fw-card {
@@ -1494,6 +1492,10 @@ footer {
 /* ------ Content Column ------ */
 .fellowship-content-col {
     padding-top: 0.5rem;
+    /* min-width:0 is CRITICAL — grid items default to min-width:auto
+       which lets children blow past the 1fr boundary */
+    min-width: 0;
+    overflow: hidden;
 }
 
 .fellowship-meta-row {
