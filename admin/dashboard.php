@@ -173,6 +173,21 @@ function upload_image($file, $target_dir = "../uploads/")
 
 check_login();
 
+// --- AUTO-MIGRATION: Ensure skills table has description and tags columns ---
+$columns = $conn->query("SHOW COLUMNS FROM skills");
+$existing_cols = [];
+if ($columns) {
+    while ($col = $columns->fetch_assoc()) {
+        $existing_cols[] = $col['Field'];
+    }
+}
+if (!in_array('description', $existing_cols)) {
+    $conn->query("ALTER TABLE skills ADD COLUMN description TEXT AFTER percentage");
+}
+if (!in_array('tags', $existing_cols)) {
+    $conn->query("ALTER TABLE skills ADD COLUMN tags VARCHAR(255) AFTER description");
+}
+
 // Handle Form Submissions
 $message = "";
 $error = "";
