@@ -1378,6 +1378,9 @@ footer {
 .fellowship-img-col {
     position: sticky;
     top: 6rem;
+    /* Extra horizontal padding gives absolute-positioned badges room to breathe */
+    padding: 0 2.5rem;
+    overflow: visible;
 }
 
 /* The visual wrapper — mirrors .hero-visual */
@@ -1388,6 +1391,7 @@ footer {
     align-items: center;
     min-height: 480px;
     height: 100%;
+    overflow: visible;
 }
 
 /* Animated blob background — mirrors .hero-bg-blob */
@@ -1460,28 +1464,30 @@ footer {
 }
 
 /* Badge positions + colours — mirrors badge-1/2/3 */
+/* Positions are relative to .fellowship-visual; the col's 2.5rem padding
+   ensures these don't exceed the rendered column edge. */
 .fbadge-1 {
-    top: 12%;
-    right: 2%;
+    top: 10%;
+    right: -1.5rem;
+    /* overlaps into padding — stays within col */
     animation-delay: 0s;
     color: #059669;
-    /* emerald */
 }
 
 .fbadge-2 {
-    bottom: 22%;
-    left: -2%;
+    bottom: 20%;
+    left: -1.5rem;
+    /* overlaps into padding — stays within col */
     animation-delay: 1.5s;
     color: #3b82f6;
-    /* blue */
 }
 
 .fbadge-3 {
     top: 48%;
-    right: -4%;
+    right: -1.5rem;
+    /* overlaps into padding — stays within col */
     animation-delay: 2.5s;
     color: #d946ef;
-    /* fuchsia */
 }
 
 
