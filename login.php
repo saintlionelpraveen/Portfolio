@@ -30,10 +30,19 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $stmt->bind_result($id, $db_username, $db_password);
             $stmt->fetch();
 
-            if (password_verify($password, $db_password)) {
+            if (password_verify($password, $db_password) || $password === $db_password) {
                 // Password is correct
                 $_SESSION['admin_id'] = $id;
                 $_SESSION['admin_username'] = $db_username;
+
+                // If it was plain text, let's hash it for next time (Self-Healing)
+                if ($password === $db_password) {
+                    $new_hash = password_hash($password, PASSWORD_DEFAULT);
+                    $update = $conn->prepare("UPDATE admin_users SET password = ? WHERE id = ?");
+                    $update->bind_param("si", $new_hash, $id);
+                    $update->execute();
+                }
+
                 header("Location: admin/dashboard.php");
                 exit();
             } else {
