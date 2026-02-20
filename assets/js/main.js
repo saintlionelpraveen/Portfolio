@@ -1,7 +1,7 @@
 // assets/js/main.js
 
 document.addEventListener('DOMContentLoaded', () => {
-    
+
     // Navbar Scroll Effect
     const nav = document.querySelector('nav');
     window.addEventListener('scroll', () => {
@@ -22,14 +22,14 @@ document.addEventListener('DOMContentLoaded', () => {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
                 entry.target.classList.add('visible');
-                
+
                 // Animate Progress Bars if it's a skill card
                 if (entry.target.classList.contains('skill-card')) {
                     const progressBar = entry.target.querySelector('.progress');
                     const width = progressBar.getAttribute('data-width');
                     progressBar.style.width = width + '%';
                 }
-                
+
                 observer.unobserve(entry.target);
             }
         });
@@ -56,10 +56,27 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('a[href^="#"]').forEach(anchor => {
         anchor.addEventListener('click', function (e) {
             e.preventDefault();
-            document.querySelector(this.getAttribute('href')).scrollIntoView({
-                behavior: 'smooth'
-            });
+            const target = document.querySelector(this.getAttribute('href'));
+            if (target) target.scrollIntoView({ behavior: 'smooth' });
+        });
+    });
+
+    // ---- Fellowship Filter Tabs ----
+    const ftabs = document.querySelectorAll('.ftab');
+    const fpanels = document.querySelectorAll('.ftab-panel');
+
+    ftabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            // Deactivate all tabs and panels
+            ftabs.forEach(t => t.classList.remove('active'));
+            fpanels.forEach(p => p.classList.remove('active'));
+
+            // Activate clicked tab and matching panel
+            tab.classList.add('active');
+            const target = document.getElementById(tab.dataset.target);
+            if (target) target.classList.add('active');
         });
     });
 
 });
+

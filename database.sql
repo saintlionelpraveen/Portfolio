@@ -55,7 +55,7 @@ CREATE TABLE IF NOT EXISTS site_content (
     description VARCHAR(255)
 );
 
--- Internships Table
+-- Internships / Fellowship Table
 CREATE TABLE IF NOT EXISTS internships (
     id INT AUTO_INCREMENT PRIMARY KEY,
     company_name VARCHAR(100) NOT NULL,
@@ -64,6 +64,40 @@ CREATE TABLE IF NOT EXISTS internships (
     description TEXT,
     company_logo VARCHAR(255),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Fellowship Skills (learned during a specific fellowship/internship)
+CREATE TABLE IF NOT EXISTS fellowship_skills (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    internship_id INT NOT NULL,
+    skill_name VARCHAR(100) NOT NULL,
+    proficiency ENUM('Beginner','Intermediate','Advanced') DEFAULT 'Beginner',
+    description TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (internship_id) REFERENCES internships(id) ON DELETE CASCADE
+);
+
+-- Fellowship Frameworks (used/learned during a fellowship)
+CREATE TABLE IF NOT EXISTS fellowship_frameworks (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    internship_id INT NOT NULL,
+    framework_name VARCHAR(100) NOT NULL,
+    category VARCHAR(50),
+    description TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (internship_id) REFERENCES internships(id) ON DELETE CASCADE
+);
+
+-- Fellowship Projects (built during a fellowship)
+CREATE TABLE IF NOT EXISTS fellowship_projects (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    internship_id INT NOT NULL,
+    project_name VARCHAR(150) NOT NULL,
+    description TEXT,
+    tech_used VARCHAR(255),
+    github_link VARCHAR(255),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (internship_id) REFERENCES internships(id) ON DELETE CASCADE
 );
 
 -- Insert Default Site Content (Seeding)
