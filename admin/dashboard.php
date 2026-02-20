@@ -1,5 +1,6 @@
 <?php
 // admin/dashboard.php
+session_start();
 require_once '../config/config.php';
 // Sanitize user input
 function clean_input($data)
