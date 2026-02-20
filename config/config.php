@@ -8,7 +8,7 @@ define('DB_PASS', 'praveen1328');
 define('DB_NAME', 'if0_41198642_praveen');
 define('BASE_URL', 'http://praveeny.gamer.gd/');
 
-// Enable Error Reporting temporarily for debugging
+// Enable Error Reporting
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 

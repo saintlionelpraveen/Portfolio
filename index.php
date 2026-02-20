@@ -17,7 +17,7 @@ function get_hero_data()
     global $conn;
     $sql = "SELECT * FROM hero LIMIT 1";
     $result = $conn->query($sql);
-    if ($result->num_rows > 0) {
+    if ($result && $result->num_rows > 0) {
         return $result->fetch_assoc();
     }
     return ['title' => 'Welcome', 'subtitle' => 'I am a Developer'];
@@ -29,7 +29,7 @@ function get_social_links()
     global $conn;
     $sql = "SELECT * FROM social_links";
     $result = $conn->query($sql);
-    return $result;
+    return $result ? $result : null;
 }
 
 // Get Site Content (Dynamic Text)
@@ -57,7 +57,7 @@ function get_internships()
     global $conn;
     try {
         $result = $conn->query("SELECT * FROM internships ORDER BY created_at DESC");
-        if ($result) {
+        if ($result && $result->num_rows > 0) {
             return $result->fetch_all(MYSQLI_ASSOC);
         }
     } catch (Exception $e) {
@@ -69,7 +69,8 @@ function get_internships()
 $hero = get_hero_data();
 $socials = get_social_links();
 $internships = get_internships();
-$about = $conn->query("SELECT * FROM about LIMIT 1")->fetch_assoc();
+$about_query = $conn->query("SELECT * FROM about LIMIT 1");
+$about = ($about_query && $about_query->num_rows > 0) ? $about_query->fetch_assoc() : ['content' => '', 'profile_image' => ''];
 
 // Handle Contact Form
 $msg_sent = false;
@@ -195,13 +196,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['send_message'])) {
                 </p>
                 <div style="margin-top: 2rem; display: flex; gap: 1rem;">
                     <?php
-                    $socials->data_seek(0);
-                    while ($link = $socials->fetch_assoc()):
-                        ?>
-                        <a href="<?php echo $link['url']; ?>" target="_blank"
-                            style="font-size: 1.5rem; color: var(--text-color);"><i
-                                class="fab fa-<?php echo strtolower($link['platform']); ?>"></i></a>
-                    <?php endwhile; ?>
+                    if ($socials):
+                        $socials->data_seek(0);
+                        while ($link = $socials->fetch_assoc()):
+                            ?>
+                            <a href="<?php echo htmlspecialchars($link['url']); ?>" target="_blank"
+                                style="font-size: 1.5rem; color: var(--text-color);"><i
+                                    class="fab fa-<?php echo strtolower($link['platform']); ?>"></i></a>
+                        <?php endwhile;
+                    endif; ?>
                 </div>
             </div>
         </div>
@@ -249,15 +252,19 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['send_message'])) {
         <div class="skills-grid">
             <?php
             $skills_query = $conn->query("SELECT * FROM skills ORDER BY percentage DESC");
-            while ($skill = $skills_query->fetch_assoc()):
-                ?>
-                <div class="skill-card fade-in">
-                    <h3><?php echo htmlspecialchars($skill['skill_name']); ?></h3>
-                    <div class="progress-bar">
-                        <div class="progress" data-width="<?php echo $skill['percentage']; ?>"></div>
+            if ($skills_query && $skills_query->num_rows > 0):
+                while ($skill = $skills_query->fetch_assoc()):
+                    ?>
+                    <div class="skill-card fade-in">
+                        <h3><?php echo htmlspecialchars($skill['skill_name']); ?></h3>
+                        <div class="progress-bar">
+                            <div class="progress" data-width="<?php echo $skill['percentage']; ?>"></div>
+                        </div>
                     </div>
-                </div>
-            <?php endwhile; ?>
+                <?php endwhile;
+            else: ?>
+                <p>Skills information coming soon.</p>
+            <?php endif; ?>
         </div>
     </section>
 
@@ -267,33 +274,37 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['send_message'])) {
         <div class="projects-grid">
             <?php
             $projects_query = $conn->query("SELECT * FROM projects ORDER BY created_at DESC");
-            while ($proj = $projects_query->fetch_assoc()):
-                ?>
-                <div class="project-card fade-in">
-                    <?php if ($proj['image']): ?>
-                        <img src="uploads/<?php echo $proj['image']; ?>" alt="<?php echo htmlspecialchars($proj['title']); ?>"
-                            class="project-img">
-                    <?php endif; ?>
-                    <h3><?php echo htmlspecialchars($proj['title']); ?></h3>
-                    <p><?php echo htmlspecialchars($proj['description']); ?></p>
-                    <div style="margin-top: 1rem;">
-                        <?php
-                        $techs = explode(',', $proj['tech_stack']);
-                        foreach ($techs as $tech) {
-                            echo '<span style="background: #e0f2fe; padding: 0.2rem 0.8rem; border-radius: 50px; font-size: 0.8rem; margin-right: 0.5rem; color: #0284c7; font-weight: 600;">' . trim($tech) . '</span>';
-                        }
-                        ?>
-                    </div>
-                    <div class="project-links">
-                        <?php if ($proj['github_link']): ?>
-                            <a href="<?php echo $proj['github_link']; ?>" target="_blank" class="btn">GitHub</a>
+            if ($projects_query && $projects_query->num_rows > 0):
+                while ($proj = $projects_query->fetch_assoc()):
+                    ?>
+                    <div class="project-card fade-in">
+                        <?php if ($proj['image']): ?>
+                            <img src="uploads/<?php echo $proj['image']; ?>" alt="<?php echo htmlspecialchars($proj['title']); ?>"
+                                class="project-img">
                         <?php endif; ?>
-                        <?php if ($proj['demo_link']): ?>
-                            <a href="<?php echo $proj['demo_link']; ?>" target="_blank" class="btn">View Live</a>
-                        <?php endif; ?>
+                        <h3><?php echo htmlspecialchars($proj['title']); ?></h3>
+                        <p><?php echo htmlspecialchars($proj['description']); ?></p>
+                        <div style="margin-top: 1rem;">
+                            <?php
+                            $techs = explode(',', $proj['tech_stack']);
+                            foreach ($techs as $tech) {
+                                echo '<span style="background: #e0f2fe; padding: 0.2rem 0.8rem; border-radius: 50px; font-size: 0.8rem; margin-right: 0.5rem; color: #0284c7; font-weight: 600;">' . trim($tech) . '</span>';
+                            }
+                            ?>
+                        </div>
+                        <div class="project-links">
+                            <?php if ($proj['github_link']): ?>
+                                <a href="<?php echo $proj['github_link']; ?>" target="_blank" class="btn">GitHub</a>
+                            <?php endif; ?>
+                            <?php if ($proj['demo_link']): ?>
+                                <a href="<?php echo $proj['demo_link']; ?>" target="_blank" class="btn">View Live</a>
+                            <?php endif; ?>
+                        </div>
                     </div>
-                </div>
-            <?php endwhile; ?>
+                <?php endwhile;
+            else: ?>
+                <p>Projects showcase coming soon.</p>
+            <?php endif; ?>
         </div>
     </section>
 
