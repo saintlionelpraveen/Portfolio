@@ -211,35 +211,21 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['send_message'])) {
     </section>
 
     <!-- Internships Section -->
-    <section id="internships" style="background: var(--bg-hover);">
+    <section id="internships">
         <h2 class="fade-in">Internships & Experience</h2>
-        <div class="projects-grid"
-            style="display: flex; flex-direction: column; max-width: 800px; margin: 0 auto; gap: 1.5rem;">
+        <div class="experience-grid">
             <?php foreach ($internships as $intern): ?>
-                <div class="project-card fade-in"
-                    style="display: flex; gap: 1.5rem; text-align: left; align-items: flex-start;">
-                    <?php if ($intern['company_logo']): ?>
-                        <img src="uploads/<?php echo $intern['company_logo']; ?>" alt="Logo"
-                            style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-                    <?php else: ?>
-                        <div
-                            style="width: 60px; height: 60px; background: #e0f2fe; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: var(--accent-color); font-size: 1.5rem;">
-                            <i class="fas fa-briefcase"></i>
-                        </div>
-                    <?php endif; ?>
-
-                    <div style="flex: 1;">
-                        <h3 style="margin-bottom: 0.2rem; color: var(--text-color);">
-                            <?php echo htmlspecialchars($intern['company_name']); ?>
-                        </h3>
-                        <p style="font-weight: 600; color: var(--accent-color); margin-bottom: 0.5rem;">
-                            <?php echo htmlspecialchars($intern['role']); ?> <span
-                                style="font-weight: normal; color: var(--text-light); font-size: 0.9rem;">•
-                                <?php echo htmlspecialchars($intern['duration']); ?></span>
-                        </p>
-                        <p style="font-size: 0.95rem; color: var(--text-light); line-height: 1.6;">
-                            <?php echo nl2br(htmlspecialchars($intern['description'])); ?>
-                        </p>
+                <div class="experience-card fade-in">
+                    <div class="exp-company">
+                        <?php echo htmlspecialchars($intern['company_name']); ?> on
+                        <em><?php echo htmlspecialchars($intern['role']); ?></em>
+                    </div>
+                    <h3><?php echo htmlspecialchars($intern['role']); ?></h3>
+                    <p class="exp-description">
+                        <?php echo htmlspecialchars($intern['description']); ?>
+                    </p>
+                    <div class="exp-meta">
+                        <span class="exp-duration"><?php echo htmlspecialchars($intern['duration']); ?></span>
                     </div>
                 </div>
             <?php endforeach; ?>
