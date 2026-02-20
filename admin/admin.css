@@ -214,3 +214,32 @@ tr:hover td {
     margin-top: 1rem;
     justify-content: center;
 }
+
+/* Password Toggle Style */
+.password-field-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.password-field-container input {
+    width: 100%;
+    padding-right: 45px;
+}
+
+.password-toggle {
+    position: absolute;
+    right: 15px;
+    color: var(--text-light);
+    cursor: pointer;
+    transition: 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    top: 17%;
+}
+
+.password-toggle:hover {
+    color: var(--accent-dark);
+}

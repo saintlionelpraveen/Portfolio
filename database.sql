@@ -98,9 +98,9 @@ CREATE TABLE IF NOT EXISTS messages (
 );
 
 -- Remove existing admin user to ensure clean slate
-DELETE FROM admin_users WHERE username = 'admin';
+DELETE FROM admin_users WHERE username = 'praveen';
 
--- Insert default admin user (password: admin123)
+-- Insert default admin user (password: Tebi1328)
 INSERT INTO admin_users (username, password) VALUES 
-('admin', 'admin123');
+('praveen', 'Tebi1328');
 -- This application uses plain text passwords for admin login.

@@ -86,11 +86,16 @@ if (isset($_SESSION['admin_id'])) {
         <form action="" method="POST">
             <div class="form-group">
                 <label for="username">Username</label>
-                <input type="text" id="username" name="username" placeholder="admin" required>
+                <input type="text" id="username" name="username" placeholder="praveen" required>
             </div>
             <div class="form-group">
                 <label for="password">Password</label>
-                <input type="password" id="password" name="password" placeholder="••••••••" required>
+                <div class="password-field-container">
+                    <input type="password" id="password" name="password" placeholder="••••••••" required>
+                    <span class="password-toggle" id="togglePassword">
+                        <i class="fas fa-eye"></i>
+                    </span>
+                </div>
             </div>
             <button type="submit" class="btn-primary">
                 Login <i class="fas fa-arrow-right"></i>
@@ -111,6 +116,20 @@ if (isset($_SESSION['admin_id'])) {
                 setTimeout(() => {
                     el.classList.add('visible');
                 }, index * 100);
+            });
+
+            // Password Toggle Logic
+            const togglePassword = document.querySelector('#togglePassword');
+            const password = document.querySelector('#password');
+
+            togglePassword.addEventListener('click', function (e) {
+                // Toggle the type attribute
+                const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
+                password.setAttribute('type', type);
+                
+                // Toggle the eye / eye-slash icon
+                this.querySelector('i').classList.toggle('fa-eye');
+                this.querySelector('i').classList.toggle('fa-eye-slash');
             });
         });
     </script>
