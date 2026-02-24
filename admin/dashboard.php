@@ -247,6 +247,34 @@ if (!in_array('fellowship_image', $fi_existing)) {
     $conn->query("ALTER TABLE internships ADD COLUMN fellowship_image VARCHAR(255) AFTER company_logo");
 }
 
+// --- AUTO-MIGRATION: social_links logo_image ---
+$sl_cols = $conn->query("SHOW COLUMNS FROM social_links");
+$sl_existing = [];
+if ($sl_cols) {
+    while ($c = $sl_cols->fetch_assoc())
+        $sl_existing[] = $c['Field'];
+}
+if (!in_array('logo_image', $sl_existing)) {
+    $conn->query("ALTER TABLE social_links ADD COLUMN logo_image VARCHAR(255) AFTER url");
+}
+if (!in_array('icon', $sl_existing) && !in_array('icon_class', $sl_existing)) {
+    $conn->query("ALTER TABLE social_links ADD COLUMN icon VARCHAR(50) AFTER logo_image");
+}
+
+// --- AUTO-MIGRATION: about extra fields ---
+$about_cols = $conn->query("SHOW COLUMNS FROM about");
+$about_existing = [];
+if ($about_cols) {
+    while ($c = $about_cols->fetch_assoc())
+        $about_existing[] = $c['Field'];
+}
+foreach (['job_title VARCHAR(100)', 'location VARCHAR(100)', 'years_exp INT DEFAULT 0', 'cv_url VARCHAR(255)'] as $coldef) {
+    $cname = explode(' ', $coldef)[0];
+    if (!in_array($cname, $about_existing)) {
+        $conn->query("ALTER TABLE about ADD COLUMN $coldef");
+    }
+}
+
 // Handle Form Submissions
 $message = "";
 $error = "";
@@ -279,16 +307,41 @@ if (isset($_POST['update_hero'])) {
     }
 }
 
+// --- NAVBAR LOGO UPDATE ---
+if (isset($_POST['update_navbar_logo'])) {
+    if (!empty($_FILES['navbar_logo_img']['name'])) {
+        $up = upload_image($_FILES['navbar_logo_img']);
+        if (isset($up['success'])) {
+            $img_path = $up['success'];
+            $stmt = $conn->prepare("INSERT INTO site_content (content_key, content_value, description) VALUES ('navbar_logo_img', ?, 'Navbar logo image') ON DUPLICATE KEY UPDATE content_value = ?");
+            $stmt->bind_param("ss", $img_path, $img_path);
+            if ($stmt->execute()) {
+                $message = "Navbar logo updated.";
+            } else {
+                $error = "Error saving navbar logo.";
+            }
+        } else {
+            $error = $up['error'];
+        }
+    } else {
+        $error = "Please select an image file.";
+    }
+}
+
 // --- ABOUT SECTION UPDATE ---
 if (isset($_POST['update_about'])) {
     $content = clean_input($_POST['about_content']);
+    $job_title = clean_input($_POST['about_job_title'] ?? '');
+    $location = clean_input($_POST['about_location'] ?? '');
+    $years_exp = (int) ($_POST['about_years_exp'] ?? 0);
+    $cv_url = clean_input($_POST['about_cv_url'] ?? '');
     $image_update = "";
 
     if (!empty($_FILES['profile_image']['name'])) {
         $upload_result = upload_image($_FILES['profile_image']);
         if (isset($upload_result['success'])) {
             $image_path = $upload_result['success'];
-            $image_update = ", profile_image='$image_path'";
+            $image_update = ", profile_image='" . $conn->real_escape_string($image_path) . "'";
         } else {
             $error = $upload_result['error'];
         }
@@ -299,16 +352,14 @@ if (isset($_POST['update_about'])) {
         if ($check->num_rows > 0) {
             $id_row = $check->fetch_assoc();
             $id = $id_row['id'];
-            $sql = "UPDATE about SET content=? $image_update WHERE id=?";
+            $sql = "UPDATE about SET content=?, job_title=?, location=?, years_exp=?, cv_url=? $image_update WHERE id=?";
             $stmt = $conn->prepare($sql);
-            $stmt->bind_param("si", $content, $id);
+            $stmt->bind_param("sssisi", $content, $job_title, $location, $years_exp, $cv_url, $id);
         } else {
-            // Only insert if image is provided or handle default
             $img = isset($image_path) ? $image_path : '';
-            $stmt = $conn->prepare("INSERT INTO about (content, profile_image) VALUES (?, ?)");
-            $stmt->bind_param("ss", $content, $img);
+            $stmt = $conn->prepare("INSERT INTO about (content, profile_image, job_title, location, years_exp, cv_url) VALUES (?, ?, ?, ?, ?, ?)");
+            $stmt->bind_param("ssssis", $content, $img, $job_title, $location, $years_exp, $cv_url);
         }
-
         if ($stmt->execute()) {
             $message = "About section updated successfully.";
         } else {
@@ -622,13 +673,24 @@ if (isset($_POST['update_fellowship_proj'])) {
 if (isset($_POST['add_social'])) {
     $platform = clean_input($_POST['social_platform']);
     $url = clean_input($_POST['social_url']);
-
-    $stmt = $conn->prepare("INSERT INTO social_links (platform, url) VALUES (?, ?)");
-    $stmt->bind_param("ss", $platform, $url);
-    if ($stmt->execute()) {
-        $message = "Social link added.";
-    } else {
-        $error = "Error adding social link.";
+    $icon = clean_input($_POST['social_icon'] ?? '');
+    $logo_path = '';
+    if (!empty($_FILES['social_logo_img']['name'])) {
+        $up = upload_image($_FILES['social_logo_img']);
+        if (isset($up['success'])) {
+            $logo_path = $up['success'];
+        } else {
+            $error = $up['error'];
+        }
+    }
+    if (empty($error)) {
+        $stmt = $conn->prepare("INSERT INTO social_links (platform, url, icon, logo_image) VALUES (?, ?, ?, ?)");
+        $stmt->bind_param("ssss", $platform, $url, $icon, $logo_path);
+        if ($stmt->execute()) {
+            $message = "Social link added.";
+        } else {
+            $error = "Error adding social link.";
+        }
     }
 }
 
@@ -645,12 +707,18 @@ if (isset($_POST['update_social'])) {
     $platform = clean_input($_POST['edit_social_platform']);
     $url = clean_input($_POST['edit_social_url']);
     $icon = clean_input($_POST['edit_social_icon'] ?? '');
-    $stmt = $conn->prepare("UPDATE social_links SET platform=?, url=?, icon=? WHERE id=?");
-    $stmt->bind_param("sssi", $platform, $url, $icon, $id);
-    if ($stmt->execute()) {
+    $logo_sql = '';
+    if (!empty($_FILES['edit_social_logo']['name'])) {
+        $up = upload_image($_FILES['edit_social_logo']);
+        if (isset($up['success'])) {
+            $logo_sql = ", logo_image='" . $conn->real_escape_string($up['success']) . "'";
+        } else {
+            $error = $up['error'];
+        }
+    }
+    if (empty($error)) {
+        $conn->query("UPDATE social_links SET platform='$platform', url='$url', icon='$icon'$logo_sql WHERE id=$id");
         $message = "Social link updated.";
-    } else {
-        $error = "Error updating social link.";
     }
 }
 
@@ -735,37 +803,49 @@ $active_tab = isset($_GET['tab']) ? $_GET['tab'] : 'hero';
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard</title>
+    <title>Admin Dashboard— Praveen Portfolio</title>
     <link rel="stylesheet" href="admin.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
 </head>
 
 <body>
 
     <div class="sidebar">
         <div class="sidebar-header">
-            <h3><i class="fas fa-user-circle"></i> Admin</h3>
+            <div class="sidebar-avatar"><?php echo strtoupper(substr($_SESSION['admin_username'] ?? 'A', 0, 1)); ?>
+            </div>
+            <div>
+                <div class="sidebar-username"><?php echo htmlspecialchars($_SESSION['admin_username'] ?? 'Admin'); ?>
+                </div>
+                <div class="sidebar-role">Portfolio Admin</div>
+            </div>
         </div>
         <ul class="nav-links-admin">
+            <li class="nav-section-label">Content</li>
             <li><a href="?tab=hero" class="<?php echo $active_tab == 'hero' ? 'active' : ''; ?>"><i
                         class="fas fa-home"></i> Hero</a></li>
             <li><a href="?tab=about" class="<?php echo $active_tab == 'about' ? 'active' : ''; ?>"><i
-                        class="fas fa-user"></i> About</a></li>
+                        class="fas fa-user"></i> About Me</a></li>
             <li><a href="?tab=skills" class="<?php echo $active_tab == 'skills' ? 'active' : ''; ?>"><i
                         class="fas fa-code"></i> Skills</a></li>
             <li><a href="?tab=projects" class="<?php echo $active_tab == 'projects' ? 'active' : ''; ?>"><i
                         class="fas fa-briefcase"></i> Projects</a></li>
             <li><a href="?tab=internships" class="<?php echo $active_tab == 'internships' ? 'active' : ''; ?>"><i
-                        class="fas fa-graduation-cap"></i> Internships</a></li>
+                        class="fas fa-graduation-cap"></i> Experience</a></li>
+            <li class="nav-section-label">Settings</li>
             <li><a href="?tab=settings" class="<?php echo $active_tab == 'settings' ? 'active' : ''; ?>"><i
                         class="fas fa-cogs"></i> General Settings</a></li>
             <li><a href="?tab=social" class="<?php echo $active_tab == 'social' ? 'active' : ''; ?>"><i
-                        class="fas fa-share-alt"></i> Socials</a></li>
+                        class="fas fa-share-alt"></i> Social Links</a></li>
             <li><a href="?tab=profile" class="<?php echo $active_tab == 'profile' ? 'active' : ''; ?>"><i
                         class="fas fa-id-card"></i> Profile</a></li>
-            <li><a href="../index.php" target="_blank"><i class="fas fa-external-link-alt"></i> View Site</a></li>
-            <li><a href="logout.php" style="color: #ef4444;"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
         </ul>
+        <div class="sidebar-bottom">
+            <a href="../index.php" target="_blank"><i class="fas fa-external-link-alt"></i> View Site</a>
+            <a href="logout.php" class="nav-danger"><i class="fas fa-sign-out-alt"></i> Logout</a>
+        </div>
     </div>
 
     <div class="main-content">
@@ -784,45 +864,120 @@ $active_tab = isset($_GET['tab']) ? $_GET['tab'] : 'hero';
 
         <?php if ($active_tab == 'hero'): ?>
             <div class="admin-card fade-in">
-                <h2><i class="fas fa-home"></i> Manage Hero Section</h2>
+                <div class="section-header">
+                    <div class="section-icon-badge" style="background:linear-gradient(135deg,#f59e0b,#fbbf24);"><i
+                            class="fas fa-home"></i></div>
+                    <div>
+                        <h2>Hero Section</h2>
+                        <p class="section-subtitle">Main headline and subtitle shown at the top of your portfolio</p>
+                    </div>
+                </div>
                 <form method="POST">
                     <div class="form-group">
-                        <label>Headline</label>
+                        <label><i class="fas fa-heading"></i> Headline</label>
                         <input type="text" name="hero_title"
-                            value="<?php echo isset($hero['title']) ? $hero['title'] : ''; ?>" required>
+                            value="<?php echo isset($hero['title']) ? htmlspecialchars($hero['title']) : ''; ?>" required>
                     </div>
                     <div class="form-group">
-                        <label>Subtitle</label>
+                        <label><i class="fas fa-align-left"></i> Subtitle</label>
                         <input type="text" name="hero_subtitle"
-                            value="<?php echo isset($hero['subtitle']) ? $hero['subtitle'] : ''; ?>" required>
+                            value="<?php echo isset($hero['subtitle']) ? htmlspecialchars($hero['subtitle']) : ''; ?>"
+                            required>
                     </div>
-                    <button type="submit" name="update_hero" class="btn-primary">Update Hero</button>
+                    <button type="submit" name="update_hero" class="btn-primary"><i class="fas fa-save"></i> Update
+                        Hero</button>
+                </form>
+            </div>
+            <!-- Navbar Logo Upload -->
+            <div class="admin-card fade-in">
+                <div class="section-header">
+                    <div class="section-icon-badge" style="background:linear-gradient(135deg,#0ea5e9,#38bdf8);"><i
+                            class="fas fa-image"></i></div>
+                    <div>
+                        <h2>Navbar Logo</h2>
+                        <p class="section-subtitle">Upload an image logo for the navigation bar (replaces text logo)</p>
+                    </div>
+                </div>
+                <?php $navbar_logo_img = isset($site_content['navbar_logo_img']) ? $site_content['navbar_logo_img']['content_value'] : ''; ?>
+                <?php if ($navbar_logo_img): ?>
+                    <div class="img-preview-block">
+                        <p>Current navbar logo:</p><img src="../uploads/<?php echo htmlspecialchars($navbar_logo_img); ?>"
+                            alt="Navbar Logo">
+                    </div>
+                <?php else: ?>
+                    <div class="upload-zone" style="margin-bottom:1.2rem;"><i class="fas fa-image"></i>
+                        <p>No navbar logo uploaded yet</p>
+                    </div>
+                <?php endif; ?>
+                <form method="POST" enctype="multipart/form-data" style="margin-top:1rem;">
+                    <div class="form-group">
+                        <label><i class="fas fa-upload"></i> Upload New Logo</label>
+                        <input type="file" name="navbar_logo_img" accept="image/*">
+                    </div>
+                    <button type="submit" name="update_navbar_logo" class="btn-primary"><i class="fas fa-save"></i> Update
+                        Navbar Logo</button>
                 </form>
             </div>
         <?php endif; ?>
 
         <?php if ($active_tab == 'about'): ?>
             <div class="admin-card fade-in">
-                <h2><i class="fas fa-user"></i> Manage About Section</h2>
+                <div class="section-header">
+                    <div class="section-icon-badge" style="background:linear-gradient(135deg,#10b981,#34d399);"><i
+                            class="fas fa-user"></i></div>
+                    <div>
+                        <h2>About Me</h2>
+                        <p class="section-subtitle">Your profile info, bio, and photo displayed on the portfolio</p>
+                    </div>
+                </div>
                 <form method="POST" enctype="multipart/form-data">
-                    <div class="form-group">
-                        <label>About Content</label>
-                        <textarea name="about_content" rows="6"
-                            required><?php echo isset($about['content']) ? $about['content'] : ''; ?></textarea>
-                    </div>
-                    <div class="form-group">
-                        <label>Profile Image</label>
-                        <input type="file" name="profile_image">
-                        <?php if (isset($about['profile_image'])): ?>
-                            <div style="margin-top: 1rem;">
-                                <p style="margin-bottom: 0.5rem; font-size: 0.9rem; color: var(--text-light);">Current Image:
-                                </p>
-                                <img src="../uploads/<?php echo $about['profile_image']; ?>"
-                                    style="height: 100px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                    <!-- Profile Photo + Meta -->
+                    <div class="profile-upload-row">
+                        <div class="profile-upload-zone" id="profileDropZone"
+                            onclick="document.getElementById('profileImageInput').click()" title="Click to change photo">
+                            <?php if (!empty($about['profile_image'])): ?>
+                                <img src="../uploads/<?php echo htmlspecialchars($about['profile_image']); ?>" alt="Profile"
+                                    id="profilePreview">
+                            <?php else: ?>
+                                <div class="upload-placeholder" id="uploadPlaceholder"><i
+                                        class="fas fa-user-circle"></i><span>Upload Photo</span></div>
+                            <?php endif; ?>
+                            <div class="upload-overlay"><i class="fas fa-camera"></i><span>Change</span></div>
+                            <input type="file" name="profile_image" id="profileImageInput" accept="image/*"
+                                class="hidden-file-input">
+                        </div>
+                        <div class="profile-meta-fields">
+                            <div class="form-grid-2">
+                                <div class="form-group">
+                                    <label><i class="fas fa-briefcase"></i> Job Title</label>
+                                    <input type="text" name="about_job_title" placeholder="e.g. Full Stack Developer"
+                                        value="<?php echo htmlspecialchars($about['job_title'] ?? ''); ?>">
+                                </div>
+                                <div class="form-group">
+                                    <label><i class="fas fa-map-marker-alt"></i> Location</label>
+                                    <input type="text" name="about_location" placeholder="e.g. Chennai, India"
+                                        value="<?php echo htmlspecialchars($about['location'] ?? ''); ?>">
+                                </div>
+                                <div class="form-group">
+                                    <label><i class="fas fa-clock"></i> Years of Experience</label>
+                                    <input type="number" name="about_years_exp" min="0" max="60" placeholder="3"
+                                        value="<?php echo htmlspecialchars($about['years_exp'] ?? ''); ?>">
+                                </div>
+                                <div class="form-group">
+                                    <label><i class="fas fa-file-pdf"></i> CV / Resume URL</label>
+                                    <input type="url" name="about_cv_url" placeholder="https://..."
+                                        value="<?php echo htmlspecialchars($about['cv_url'] ?? ''); ?>">
+                                </div>
                             </div>
-                        <?php endif; ?>
+                        </div>
                     </div>
-                    <button type="submit" name="update_about" class="btn-primary">Update About</button>
+                    <div class="form-group">
+                        <label><i class="fas fa-align-left"></i> Bio <span class="char-count" id="bioCount"></span></label>
+                        <textarea name="about_content" rows="6" id="bioTextarea" placeholder="Tell your story..."
+                            required><?php echo isset($about['content']) ? htmlspecialchars($about['content']) : ''; ?></textarea>
+                    </div>
+                    <button type="submit" name="update_about" class="btn-primary"><i class="fas fa-save"></i> Save About
+                        Section</button>
                 </form>
             </div>
         <?php endif; ?>
@@ -1426,18 +1581,35 @@ $active_tab = isset($_GET['tab']) ? $_GET['tab'] : 'hero';
 
         <?php if ($active_tab == 'social'): ?>
             <div class="admin-card fade-in">
-                <h2><i class="fas fa-share-alt"></i> Manage Social Links</h2>
-                <form method="POST" style="display: flex; gap: 1rem; align-items: flex-end; flex-wrap: wrap;">
-                    <div class="form-group" style="flex: 1; min-width: 150px;">
+                <div class="section-header">
+                    <div class="section-icon-badge" style="background:linear-gradient(135deg,#ec4899,#f472b6);"><i
+                            class="fas fa-share-alt"></i></div>
+                    <div>
+                        <h2>Social Links</h2>
+                        <p class="section-subtitle">Manage all your social media links shown in the footer</p>
+                    </div>
+                </div>
+                <form method="POST" enctype="multipart/form-data"
+                    style="display:flex;gap:1rem;align-items:flex-end;flex-wrap:wrap;">
+                    <div class="form-group" style="flex:1;min-width:140px;">
                         <label>Platform</label>
                         <input type="text" name="social_platform" placeholder="LinkedIn" required>
                     </div>
-                    <div class="form-group" style="flex: 2; min-width: 200px;">
+                    <div class="form-group" style="flex:2;min-width:200px;">
                         <label>URL</label>
                         <input type="text" name="social_url" placeholder="https://..." required>
                     </div>
+                    <div class="form-group" style="flex:1;min-width:130px;">
+                        <label>Icon Class <small style="font-weight:400;color:var(--text-muted)">(fa-...)</small></label>
+                        <input type="text" name="social_icon" placeholder="fa-linkedin">
+                    </div>
+                    <div class="form-group" style="flex:1;min-width:160px;">
+                        <label>Logo Image <small style="font-weight:400;color:var(--text-muted)">(optional)</small></label>
+                        <input type="file" name="social_logo_img" accept="image/*">
+                    </div>
                     <div class="form-group">
-                        <button type="submit" name="add_social" class="btn-primary">Add Link</button>
+                        <button type="submit" name="add_social" class="btn-primary"><i class="fas fa-plus"></i> Add
+                            Link</button>
                     </div>
                 </form>
 
@@ -1445,6 +1617,7 @@ $active_tab = isset($_GET['tab']) ? $_GET['tab'] : 'hero';
                     <table>
                         <thead>
                             <tr>
+                                <th>Logo</th>
                                 <th>Platform</th>
                                 <th>URL</th>
                                 <th>Action</th>
@@ -1452,41 +1625,70 @@ $active_tab = isset($_GET['tab']) ? $_GET['tab'] : 'hero';
                         </thead>
                         <tbody>
                             <?php while ($social = $socials->fetch_assoc()): ?>
-                                    <td style="text-transform: capitalize; font-weight: 500;">
-                                        <i class="fab fa-<?php echo strtolower($social['platform']); ?>"
-                                            style="margin-right: 8px; color: var(--text-light);"></i>
-                                        <?php echo htmlspecialchars($social['platform']); ?>
+                                <tr>
+                                    <td>
+                                        <?php if (!empty($social['logo_image'])): ?>
+                                            <img src="../uploads/<?php echo htmlspecialchars($social['logo_image']); ?>"
+                                                class="social-logo-thumb" alt="logo">
+                                        <?php else: ?>
+                                            <div
+                                                style="width:32px;height:32px;background:#f1f5f9;border-radius:8px;display:flex;align-items:center;justify-content:center;">
+                                                <i class="fab fa-<?php echo strtolower(htmlspecialchars($social['platform'])); ?>"
+                                                    style="color:var(--text-muted);"></i>
+                                            </div>
+                                        <?php endif; ?>
                                     </td>
-                                    <td><a href="<?php echo $social['url']; ?>" target="_blank"
-                                            style="color: var(--accent-dark); text-decoration: none;"><?php echo htmlspecialchars($social['url']); ?></a>
+                                    <td style="font-weight:600;text-transform:capitalize;">
+                                        <?php echo htmlspecialchars($social['platform']); ?></td>
+                                    <td><a href="<?php echo htmlspecialchars($social['url']); ?>" target="_blank"
+                                            style="color:var(--accent);text-decoration:none;font-size:0.88rem;"><?php echo htmlspecialchars($social['url']); ?></a>
                                     </td>
                                     <td>
                                         <div style="display:flex;gap:0.5rem;">
-                                            <button type="button" class="btn-sm btn-edit" onclick="toggleEditRow('sl-<?php echo $social['id']; ?>')"><i class="fas fa-edit"></i></button>
-                                            <a href="?tab=social&delete_social=<?php echo $social['id']; ?>" class="btn-sm btn-danger" onclick="return confirm('Delete this link?')"><i class="fas fa-trash"></i></a>
+                                            <button type="button" class="btn-sm btn-edit"
+                                                onclick="toggleEditRow('sl-<?php echo $social['id']; ?>')"><i
+                                                    class="fas fa-edit"></i></button>
+                                            <a href="?tab=social&delete_social=<?php echo $social['id']; ?>"
+                                                class="btn-sm btn-danger" onclick="return confirm('Delete this link?')"><i
+                                                    class="fas fa-trash"></i></a>
                                         </div>
                                     </td>
                                 </tr>
                                 <!-- Inline Edit Row -->
-                                <tr id="sl-<?php echo $social['id']; ?>" style="display:none;background:#f8fafc;">
-                                    <td colspan="3" style="padding:1rem;">
-                                        <form method="POST" style="display:flex;gap:0.8rem;flex-wrap:wrap;align-items:flex-end;">
+                                <tr id="sl-<?php echo $social['id']; ?>" style="display:none;">
+                                    <td colspan="4" style="padding:1rem;">
+                                        <form method="POST" enctype="multipart/form-data"
+                                            style="display:flex;gap:0.8rem;flex-wrap:wrap;align-items:flex-end;">
                                             <input type="hidden" name="edit_social_id" value="<?php echo $social['id']; ?>">
                                             <div class="form-group" style="flex:1;min-width:120px;margin:0;">
                                                 <label style="font-size:0.78rem;">Platform</label>
-                                                <input type="text" name="edit_social_platform" value="<?php echo htmlspecialchars($social['platform']); ?>" style="font-size:0.85rem;">
+                                                <input type="text" name="edit_social_platform"
+                                                    value="<?php echo htmlspecialchars($social['platform']); ?>"
+                                                    style="font-size:0.85rem;">
                                             </div>
                                             <div class="form-group" style="flex:3;min-width:200px;margin:0;">
                                                 <label style="font-size:0.78rem;">URL</label>
-                                                <input type="text" name="edit_social_url" value="<?php echo htmlspecialchars($social['url']); ?>" style="font-size:0.85rem;">
+                                                <input type="text" name="edit_social_url"
+                                                    value="<?php echo htmlspecialchars($social['url']); ?>"
+                                                    style="font-size:0.85rem;">
                                             </div>
-                                            <div class="form-group" style="flex:1;min-width:140px;margin:0;">
-                                                <label style="font-size:0.78rem;">Icon Class <small style="font-weight:normal;">(fa-...)</small></label>
-                                                <input type="text" name="edit_social_icon" value="<?php echo htmlspecialchars($social['icon'] ?? ''); ?>" placeholder="fa-linkedin" style="font-size:0.85rem;">
+                                            <div class="form-group" style="flex:1;min-width:130px;margin:0;">
+                                                <label style="font-size:0.78rem;">Icon (fa-...)</label>
+                                                <input type="text" name="edit_social_icon"
+                                                    value="<?php echo htmlspecialchars($social['icon'] ?? ''); ?>"
+                                                    placeholder="fa-linkedin" style="font-size:0.85rem;">
                                             </div>
-                                            <button type="submit" name="update_social" class="btn-primary" style="padding:0.6rem 1rem;font-size:0.85rem;"><i class="fas fa-save"></i> Save</button>
+                                            <div class="form-group" style="flex:1;min-width:160px;margin:0;">
+                                                <label style="font-size:0.78rem;">New Logo Image</label>
+                                                <input type="file" name="edit_social_logo" accept="image/*"
+                                                    style="font-size:0.85rem;">
+                                            </div>
+                                            <button type="submit" name="update_social" class="btn-primary"
+                                                style="padding:0.6rem 1rem;font-size:0.85rem;"><i class="fas fa-save"></i>
+                                                Save</button>
                                         </form>
                                     </td>
+                                </tr>
                             <?php endwhile; ?>
                         </tbody>
                     </table>
@@ -1521,10 +1723,42 @@ $active_tab = isset($_GET['tab']) ? $_GET['tab'] : 'hero';
     <script>
         // Fade-in on load
         document.addEventListener('DOMContentLoaded', () => {
-            const fadeElems = document.querySelectorAll('.fade-in');
-            fadeElems.forEach((el, index) => {
-                setTimeout(() => { el.classList.add('visible'); }, index * 100);
+            document.querySelectorAll('.fade-in').forEach((el, i) => {
+                setTimeout(() => el.classList.add('visible'), i * 80);
             });
+
+            // Profile image live preview
+            const profileInput = document.getElementById('profileImageInput');
+            if (profileInput) {
+                profileInput.addEventListener('change', function () {
+                    if (this.files && this.files[0]) {
+                        const reader = new FileReader();
+                        reader.onload = e => {
+                            let preview = document.getElementById('profilePreview');
+                            const placeholder = document.getElementById('uploadPlaceholder');
+                            if (!preview) {
+                                preview = document.createElement('img');
+                                preview.id = 'profilePreview';
+                                preview.style.cssText = 'width:100%;height:100%;object-fit:cover;';
+                                const zone = document.getElementById('profileDropZone');
+                                if (placeholder) placeholder.style.display = 'none';
+                                zone.insertBefore(preview, zone.querySelector('.upload-overlay'));
+                            }
+                            preview.src = e.target.result;
+                        };
+                        reader.readAsDataURL(this.files[0]);
+                    }
+                });
+            }
+
+            // Bio character counter
+            const bioTextarea = document.getElementById('bioTextarea');
+            const bioCount = document.getElementById('bioCount');
+            if (bioTextarea && bioCount) {
+                const update = () => bioCount.textContent = bioTextarea.value.length + ' chars';
+                bioTextarea.addEventListener('input', update);
+                update();
+            }
         });
 
         // Toggle inline edit rows
@@ -1532,11 +1766,7 @@ $active_tab = isset($_GET['tab']) ? $_GET['tab'] : 'hero';
             const row = document.getElementById(id);
             if (!row) return;
             const isHidden = row.style.display === 'none' || row.style.display === '';
-            row.style.display = isHidden ? 'table-row' : 'none';
-            // For block-level panels (fellowship header)
-            if (row.tagName !== 'TR') {
-                row.style.display = isHidden ? 'block' : 'none';
-            }
+            row.style.display = isHidden ? (row.tagName === 'TR' ? 'table-row' : 'block') : 'none';
         }
     </script>
 </body>
