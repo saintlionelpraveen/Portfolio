@@ -182,7 +182,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['send_message'])) {
             <p><?php echo htmlspecialchars($hero['subtitle']); ?></p>
 
             <div class="cta-group">
-                <a href="#contact" class="btn-primary"><?php echo get_site_content('hire_me_text'); ?> <i
+                <a href="#contact" class="btn-primary"><?php echo get_site_content('Contact Me'); ?> <i
                         class="fas fa-arrow-right"></i></a>
 
                 
@@ -215,18 +215,27 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['send_message'])) {
     <div class="marquee-container">
         <div class="marquee-content">
             <div class="marquee-item"><i class="fas fa-star"></i> Design</div>
-            <div class="marquee-item"><i class="fas fa-star"></i> Develop</div>
+            <div class="marquee-item"><i class="fas fa-star"></i> Kubernets</div>
+            <div class="marquee-item"><i class="fas fa-star"></i> CI/CD</div>
+            <div class="marquee-item"><i class="fas fa-star"></i> UI/UX</div>
+            <div class="marquee-item"><i class="fas fa-star"></i> Development</div>
             <div class="marquee-item"><i class="fas fa-star"></i> Discover</div>
             <div class="marquee-item"><i class="fas fa-star"></i> Design</div>
-            <div class="marquee-item"><i class="fas fa-star"></i> Develop</div>
+            <div class="marquee-item"><i class="fas fa-star"></i> Development</div>
             <div class="marquee-item"><i class="fas fa-star"></i> Discover</div>
-            <div class="marquee-item"><i class="fas fa-star"></i> Design</div>
-            <div class="marquee-item"><i class="fas fa-star"></i> Develop</div>
-            <div class="marquee-item"><i class="fas fa-star"></i> Discover</div>
+            <div class="marquee-item"><i class="fas fa-star"></i> Frappe</div>
+
             <!-- Duplicate for seamless scroll -->
             <div class="marquee-item"><i class="fas fa-star"></i> Design</div>
-            <div class="marquee-item"><i class="fas fa-star"></i> Develop</div>
+            <div class="marquee-item"><i class="fas fa-star"></i> Kubernets</div>
+            <div class="marquee-item"><i class="fas fa-star"></i> CI/CD</div>
+            <div class="marquee-item"><i class="fas fa-star"></i> UI/UX</div>
+            <div class="marquee-item"><i class="fas fa-star"></i> Development</div>
             <div class="marquee-item"><i class="fas fa-star"></i> Discover</div>
+            <div class="marquee-item"><i class="fas fa-star"></i> Design</div>
+            <div class="marquee-item"><i class="fas fa-star"></i> Development</div>
+            <div class="marquee-item"><i class="fas fa-star"></i> Discover</div>
+            <div class="marquee-item"><i class="fas fa-star"></i> Frappe</div>
         </div>
     </div>
 
