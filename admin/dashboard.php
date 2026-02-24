@@ -1511,7 +1511,7 @@ $active_tab = isset($_GET['tab']) ? $_GET['tab'] : 'hero';
                         <label>New Password</label>
                         <input type="text" name="new_password" placeholder="Leave blank to keep current">
                     </div>
-                    <button type="submit" name="update_admin_profile" class="btn-primary">Update Profile</button>
+                    <button type="submit" name="update_admin_profile" class="btn-primary">Update Now</button>
                 </form>
             </div>
         <?php endif; ?>
