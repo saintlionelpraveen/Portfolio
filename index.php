@@ -185,18 +185,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['send_message'])) {
                 <a href="#contact" class="btn-primary"><?php echo get_site_content('hire_me_text'); ?> <i
                         class="fas fa-arrow-right"></i></a>
 
-                <div class="client-stats">
-                    <div class="avatars">
-                        <!-- Placeholders - simple colored circles or unsplash user images -->
-                        <img src="https://ui-avatars.com/api/?name=John+Doe&background=0D8ABC&color=fff" alt="Client">
-                        <img src="https://ui-avatars.com/api/?name=Jane+Smith&background=3b82f6&color=fff" alt="Client">
-                        <img src="https://ui-avatars.com/api/?name=Mike+Ross&background=6366f1&color=fff" alt="Client">
-                    </div>
-                    <div class="stats-text">
-                        <?php echo get_site_content('clients_count'); ?>
-                        <span><?php echo get_site_content('clients_subtext'); ?></span>
-                    </div>
-                </div>
+                
             </div>
         </div>
 
@@ -211,13 +200,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['send_message'])) {
 
             <!-- Floating Badges -->
             <div class="floating-badge badge-1">
-                <i class="fas fa-palette"></i> <?php echo get_site_content('hero_badge_1'); ?>
+                <i class="fas fa-palette"></i> <?php echo get_site_content('Tech Addict'); ?>
             </div>
             <div class="floating-badge badge-2">
-                <i class="fas fa-code"></i> <?php echo get_site_content('hero_badge_2'); ?>
+                <i class="fas fa-code"></i> <?php echo get_site_content('Software Engineer'); ?>
             </div>
             <div class="floating-badge badge-3">
-                <i class="fas fa-layer-group"></i> <?php echo get_site_content('hero_badge_3'); ?>
+                <i class="fas fa-layer-group"></i> <?php echo get_site_content('Full Stack Developer'); ?>
             </div>
         </div>
     </section>
@@ -696,9 +685,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['send_message'])) {
     </section>
 
     <!-- Footer -->
+     
     <footer class="fade-in">
-        <h1 class="logo" style="margin-bottom: 1rem; display: inline-block;">MGR.</h1>
+        <center>
+        <h1 class="logo" style="margin-bottom: 1rem; display: inline-block;">Praveen.Y</h1>
         <p style="color: var(--text-light);">&copy; <?php echo date('Y'); ?>. All rights reserved.</p>
+        </center>
     </footer>
 
     <script src="assets/js/main.js"></script>
