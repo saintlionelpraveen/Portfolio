@@ -24,7 +24,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         if ($stmt->num_rows == 1) {
             $stmt->bind_result($id, $db_username, $db_password);
             $stmt->fetch();
-            if ($password === $db_password) {
+            if (password_verify($password, $db_password)) {
                 $_SESSION['admin_id'] = $id;
                 $_SESSION['admin_username'] = $db_username;
                 header("Location: admin/dashboard.php");
