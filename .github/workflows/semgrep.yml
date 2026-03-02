@@ -1,0 +1,25 @@
+name: Semgrep
+
+on:
+  pull_request:
+    branches: ["main"]
+  push:
+    branches: ["main"]
+
+jobs:
+  semgrep:
+    name: Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Run Semgrep with Custom Rules
+        uses: returntocorp/semgrep-action@v1
+        with:
+          config: ./semgrep.yml
+          
+      # Optional: To use Semgrep's official PHP ruleset in addition to yours
+      # - name: Run Semgrep with Official PHP Rules
+      #   uses: returntocorp/semgrep-action@v1
+      #   with:
+      #     config: "p/php"

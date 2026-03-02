@@ -1,0 +1,48 @@
+rules:
+  - id: plaintext-password-comparison
+    patterns:
+      - pattern-either:
+          - pattern: $A === $B
+          - pattern: $A == $B
+      - metavariable-regex:
+          metavariable: $A
+          regex: (?i).*pass.*
+    message: "Potential plaintext password comparison. Passwords should be hashed using password_hash() and verified using password_verify()."
+    languages:
+      - php
+    severity: ERROR
+
+  - id: insecure-hash-function
+    patterns:
+      - pattern-either:
+          - pattern: md5(...)
+          - pattern: sha1(...)
+    message: "Usage of insecure cryptographic hash functions (md5, sha1). For passwords, use password_hash(). For general hashing, use stronger algorithms like sha256."
+    languages:
+      - php
+    severity: WARNING
+
+  - id: basic-sql-injection
+    patterns:
+      - pattern-either:
+          - pattern: $CONN->query("..." . $VAR . "...")
+          - pattern: $CONN->query(sprintf("...", $VAR))
+          - pattern: mysqli_query($CONN, "..." . $VAR . "...")
+    message: "Potential SQL injection. Variables are directly concatenated into a SQL query. Use prepared statements instead."
+    languages:
+      - php
+    severity: ERROR
+
+  - id: basic-xss-echo
+    patterns:
+      - pattern-either:
+          - pattern: echo $_GET[$X];
+          - pattern: echo $_POST[$X];
+          - pattern: echo $_REQUEST[$X];
+          - pattern: print($_GET[$X]);
+          - pattern: print($_POST[$X]);
+          - pattern: print($_REQUEST[$X]);
+    message: "Potential Cross-Site Scripting (XSS). Directly printing user input without sanitization. Use htmlspecialchars()."
+    languages:
+      - php
+    severity: ERROR
