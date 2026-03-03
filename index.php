@@ -164,7 +164,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['send_message'])) {
 
     <!-- Navbar -->
     <nav>
-        <a href="#home" class="logo"><?php echo get_site_content('navbar_logo'); ?></a>
+        <a href="#home" class="logo"><?php
+        $navbar_logo_img = get_site_content('navbar_logo_img');
+        if ($navbar_logo_img && $navbar_logo_img !== 'navbar_logo_img') {
+            echo '<img src="uploads/' . htmlspecialchars($navbar_logo_img) . '" alt="Logo" style="height:40px;object-fit:contain;">';
+        } else {
+            echo htmlspecialchars(get_site_content('navbar_logo'));
+        }
+        ?></a>
         <ul class="nav-links">
 
             <li><a href="#home">Home</a></li>
@@ -185,7 +192,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['send_message'])) {
                 <a href="#contact" class="btn-primary"><?php echo get_site_content('Contact Me'); ?> <i
                         class="fas fa-arrow-right"></i></a>
 
-                
+
             </div>
         </div>
 
@@ -694,11 +701,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['send_message'])) {
     </section>
 
     <!-- Footer -->
-     
+
     <footer class="fade-in">
         <center>
-        <h1 class="logo" style="margin-bottom: 1rem; display: inline-block;">Praveen.Y</h1>
-        <p style="color: var(--text-light);">&copy; <?php echo date('Y'); ?>. All rights reserved.</p>
+            <h1 class="logo" style="margin-bottom: 1rem; display: inline-block;">Praveen.Y</h1>
+            <p style="color: var(--text-light);">&copy; <?php echo date('Y'); ?>. All rights reserved.</p>
         </center>
     </footer>
 
