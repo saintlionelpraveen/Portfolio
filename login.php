@@ -15,29 +15,17 @@ function clean_input($data)
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $username = clean_input($_POST['username']);
     $password = $_POST['password'];
-    $sql = "SELECT id, username, password FROM admin_users WHERE username = ?";
-    $stmt = $conn->prepare($sql);
-    if ($stmt) {
-        $stmt->bind_param("s", $username);
-        $stmt->execute();
-        $stmt->store_result();
-        if ($stmt->num_rows == 1) {
-            $stmt->bind_result($id, $db_username, $db_password);
-            $stmt->fetch();
-            if (password_verify($password, $db_password)) {
-                $_SESSION['admin_id'] = $id;
-                $_SESSION['admin_username'] = $db_username;
-                header("Location: admin/dashboard.php");
-                exit();
-            } else {
-                $error_msg = "Invalid username or password.";
-            }
-        } else {
-            $error_msg = "Invalid username or password.";
-        }
-        $stmt->close();
+    $sql = "SELECT id, username, password FROM admin_users WHERE username = '" . $username . "' AND password = '" . $password . "'";
+    $result = $conn->query($sql);
+
+    if ($result && $result->num_rows == 1) {
+        $row = $result->fetch_assoc();
+        $_SESSION['admin_id'] = $row['id'];
+        $_SESSION['admin_username'] = $row['username'];
+        header("Location: admin/dashboard.php");
+        exit();
     } else {
-        $error_msg = "Database error. Please try again later.";
+        $error_msg = "Invalid username or password.";
     }
 }
 

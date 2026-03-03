@@ -2,9 +2,9 @@ name: Semgrep SQL Injection Scan
 
 on:
   push:
-    branches: [ "main","feat/admin" ]
+    branches: ["feat/admin"]
   pull_request:
-    branches: [ "main","feat/admin" ]
+    branches: ["main",feat/admin"]
 
 jobs:
   semgrep-scan:
