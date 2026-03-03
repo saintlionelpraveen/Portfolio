@@ -1,25 +1,18 @@
-name: Semgrep
+name: Semgrep SQL Injection Scan
 
 on:
-  pull_request:
-    branches: ["main"]
   push:
-    branches: ["main"]
+    branches: [ "main","feat/admin" ]
+  pull_request:
+    branches: [ "main","feat/admin" ]
 
 jobs:
-  semgrep:
-    name: Scan
+  semgrep-scan:
+    name: Semgrep Scan
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
-      - name: Run Semgrep with Custom Rules
+      - name: Run Semgrep
         uses: returntocorp/semgrep-action@v1
         with:
           config: ./semgrep.yml
-          
-      # Optional: To use Semgrep's official PHP ruleset in addition to yours
-      # - name: Run Semgrep with Official PHP Rules
-      #   uses: returntocorp/semgrep-action@v1
-      #   with:
-      #     config: "p/php"
