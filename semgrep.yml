@@ -1,11 +1,12 @@
 rules:
-  - id: basic-sql-injection
+  - id: variable-in-sql-query
     patterns:
       - pattern-either:
-          - pattern: $CONN->query("..." . $VAR . "...")
-          - pattern: $CONN->query(sprintf("...", $VAR))
-          - pattern: mysqli_query($CONN, "..." . $VAR . "...")
-    message: "Potential SQL injection. Variables are directly concatenated into a SQL query. Use prepared statements instead."
+          - pattern: $CONN->query($SQL)
+          - pattern: mysqli_query($CONN, $SQL)
+      - pattern-not: $CONN->query("...")
+      - pattern-not: mysqli_query($CONN, "...")
+    message: "Potential SQL injection. A variable is being passed into a database query instead of using a prepared statement."
     languages:
       - php
     severity: ERROR
