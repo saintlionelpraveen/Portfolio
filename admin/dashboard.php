@@ -188,6 +188,16 @@ if (!in_array('tags', $existing_cols)) {
     $conn->query("ALTER TABLE skills ADD COLUMN tags VARCHAR(255) AFTER description");
 }
 
+// --- AUTO-MIGRATION: Ensure site_content table exists ---
+$conn->query("
+    CREATE TABLE IF NOT EXISTS site_content (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        content_key VARCHAR(50) NOT NULL UNIQUE,
+        content_value TEXT,
+        description VARCHAR(255)
+    )
+");
+
 // --- AUTO-MIGRATION: Ensure internships & fellowship tables exist ---
 $conn->query("
     CREATE TABLE IF NOT EXISTS internships (
@@ -812,7 +822,13 @@ $active_tab = isset($_GET['tab']) ? $_GET['tab'] : 'hero';
 
 <body>
 
-    <div class="sidebar">
+    <!-- Mobile Menu Toggle -->
+    <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Toggle menu">
+        <i class="fas fa-bars" id="menuIcon"></i>
+    </button>
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <div class="sidebar" id="sidebar">
         <div class="sidebar-header">
             <div class="sidebar-avatar"><?php echo strtoupper(substr($_SESSION['admin_username'] ?? 'A', 0, 1)); ?>
             </div>
@@ -1639,7 +1655,8 @@ $active_tab = isset($_GET['tab']) ? $_GET['tab'] : 'hero';
                                         <?php endif; ?>
                                     </td>
                                     <td style="font-weight:600;text-transform:capitalize;">
-                                        <?php echo htmlspecialchars($social['platform']); ?></td>
+                                        <?php echo htmlspecialchars($social['platform']); ?>
+                                    </td>
                                     <td><a href="<?php echo htmlspecialchars($social['url']); ?>" target="_blank"
                                             style="color:var(--accent);text-decoration:none;font-size:0.88rem;"><?php echo htmlspecialchars($social['url']); ?></a>
                                     </td>
@@ -1721,13 +1738,63 @@ $active_tab = isset($_GET['tab']) ? $_GET['tab'] : 'hero';
     </div>
 
     <script>
-        // Fade-in on load
         document.addEventListener('DOMContentLoaded', () => {
-            document.querySelectorAll('.fade-in').forEach((el, i) => {
-                setTimeout(() => el.classList.add('visible'), i * 80);
-            });
+            // ── IntersectionObserver for scroll-triggered fade-in ──
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach((entry, index) => {
+                    if (entry.isIntersecting) {
+                        setTimeout(() => {
+                            entry.target.classList.add('visible');
+                        }, index * 60);
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, { threshold: 0.08, rootMargin: '0px 0px -30px 0px' });
 
-            // Profile image live preview
+            document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+
+            // ── Parallax depth on scroll ──
+            const mainContent = document.querySelector('.main-content');
+            if (mainContent) {
+                let ticking = false;
+                mainContent.addEventListener('scroll', () => {
+                    if (!ticking) {
+                        requestAnimationFrame(() => {
+                            const scrollY = mainContent.scrollTop || window.scrollY;
+                            const cards = mainContent.querySelectorAll('.admin-card');
+                            cards.forEach((card, i) => {
+                                const depth = 0.02 + (i * 0.005);
+                                card.style.transform = `translateY(${scrollY * depth * -1}px)`;
+                            });
+                            ticking = false;
+                        });
+                        ticking = true;
+                    }
+                });
+            }
+
+            // ── Mobile sidebar toggle ──
+            const menuBtn = document.getElementById('mobileMenuBtn');
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            const menuIcon = document.getElementById('menuIcon');
+
+            if (menuBtn && sidebar && overlay) {
+                menuBtn.addEventListener('click', () => {
+                    sidebar.classList.toggle('open');
+                    overlay.classList.toggle('active');
+                    menuIcon.classList.toggle('fa-bars');
+                    menuIcon.classList.toggle('fa-times');
+                });
+                overlay.addEventListener('click', () => {
+                    sidebar.classList.remove('open');
+                    overlay.classList.remove('active');
+                    menuIcon.classList.add('fa-bars');
+                    menuIcon.classList.remove('fa-times');
+                });
+            }
+
+            // ── Profile image live preview ──
             const profileInput = document.getElementById('profileImageInput');
             if (profileInput) {
                 profileInput.addEventListener('change', function () {
@@ -1751,7 +1818,7 @@ $active_tab = isset($_GET['tab']) ? $_GET['tab'] : 'hero';
                 });
             }
 
-            // Bio character counter
+            // ── Bio character counter ──
             const bioTextarea = document.getElementById('bioTextarea');
             const bioCount = document.getElementById('bioCount');
             if (bioTextarea && bioCount) {
