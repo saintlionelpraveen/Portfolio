@@ -814,7 +814,7 @@ $active_tab = isset($_GET['tab']) ? $_GET['tab'] : 'hero';
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard— Praveen Portfolio</title>
-    <link rel="stylesheet" href="admin.css">
+    <link rel="stylesheet" href="admin.css?v=<?php echo time(); ?>">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
         rel="stylesheet">
@@ -866,873 +866,1002 @@ $active_tab = isset($_GET['tab']) ? $_GET['tab'] : 'hero';
 
     <div class="main-content">
 
-        <?php if ($message): ?>
-            <div class="alert alert-success fade-in">
-                <i class="fas fa-check-circle"></i> <?php echo $message; ?>
+        <!-- Top Header for Premium UX -->
+        <div class="top-header fade-in">
+            <div class="top-header-left">
+                <h2><?php
+                $titles = [
+                    'hero' => 'Hero Section',
+                    'about' => 'About Me',
+                    'skills' => 'My Skills',
+                    'projects' => 'Projects',
+                    'internships' => 'Experience & Fellowship',
+                    'settings' => 'General Settings',
+                    'social' => 'Social Links',
+                    'profile' => 'Profile'
+                ];
+                echo $titles[$active_tab] ?? 'Dashboard';
+                ?></h2>
+                <div class="breadcrumbs">
+                    <span>Admin</span> <i class="fas fa-chevron-right"></i>
+                    <span class="active-crumb"><?php echo $titles[$active_tab] ?? 'Dashboard'; ?></span>
+                </div>
             </div>
+            <div class="top-header-right">
+                <div class="live-clock" id="liveClock"></div>
+                <div class="header-user-badge">
+                    <div class="header-avatar">
+                        <?php echo strtoupper(substr($_SESSION['admin_username'] ?? 'A', 0, 1)); ?></div>
+                    <span>Hi, <?php echo htmlspecialchars($_SESSION['admin_username'] ?? 'Admin'); ?></span>
+                </div>
+            </div>
+        </div>
+
+        <style>
+            .top-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 2rem;
+                padding: 1.2rem 1.8rem;
+                background: #fff;
+                border-radius: 16px;
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+                border: 1px solid rgba(0, 0, 0, 0.04);
+            }
+
+            .top-header h2 {
+                font-size: 1.4rem;
+                font-weight: 700;
+                color: #0f172a;
+                margin: 0 0 0.3rem 0;
+                letter-spacing: -0.02em;
+            }
+
+            .breadcrumbs {
+                font-size: 0.82rem;
+                color: #64748b;
+                display: flex;
+                align-items: center;
+                gap: 0.4rem;
+                font-weight: 500;
+            }
+
+            .breadcrumbs i {
+                font-size: 0.6rem;
+                color: #cbd5e1;
+            }
+
+            .breadcrumbs .active-crumb {
+                color: #6366f1;
+                font-weight: 600;
+            }
+
+            .top-header-right {
+                display: flex;
+                align-items: center;
+                gap: 1.5rem;
+            }
+
+            .live-clock {
+                font-size: 0.88rem;
+                font-weight: 600;
+                color: #475569;
+                background: #f8fafc;
+                padding: 0.4rem 0.8rem;
+                border-radius: 8px;
+                border: 1px solid #e2e8f0;
+            }
+
+            .header-user-badge {
+                display: flex;
+                align-items: center;
+                gap: 0.7rem;
+                font-size: 0.9rem;
+                font-weight: 600;
+                color: #1e293b;
+                background: #f1f5f9;
+                padding: 0.4rem 1rem 0.4rem 0.4rem;
+                border-radius: 30px;
+            }
+
+            .header-avatar {
+                width: 32px;
+                height: 32px;
+                background: linear-gradient(135deg, #6366f1, #8b5cf6);
+                color: #fff;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border-radius: 50%;
+                font-size: 0.85rem;
+            }
+
+            @media (max-width: 768px) {
+                .top-header {
+                    flex-direction: column;
+                    align-items: flex-start;
+                    gap: 1rem;
+                }
+
+                .top-header-right {
+                    width: 100%;
+                    justify-content: space-between;
+                }
+            }
+        </style>
+        <script>
+            setInterval(() => {
+                const now = new Date();
+                document.getElementById('liveClock').textContent = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            }, 1000);
+        </script>
+
+        <?php if ($message): ?>
+                <div class="alert alert-success fade-in">
+                    <i class="fas fa-check-circle"></i> <?php echo $message; ?>
+                </div>
         <?php endif; ?>
 
         <?php if ($error): ?>
-            <div class="alert alert-error fade-in">
-                <i class="fas fa-exclamation-circle"></i> <?php echo $error; ?>
-            </div>
+                <div class="alert alert-error fade-in">
+                    <i class="fas fa-exclamation-circle"></i> <?php echo $error; ?>
+                </div>
         <?php endif; ?>
 
         <?php if ($active_tab == 'hero'): ?>
-            <div class="admin-card fade-in">
-                <div class="section-header">
-                    <div class="section-icon-badge" style="background:linear-gradient(135deg,#f59e0b,#fbbf24);"><i
-                            class="fas fa-home"></i></div>
-                    <div>
-                        <h2>Hero Section</h2>
-                        <p class="section-subtitle">Main headline and subtitle shown at the top of your portfolio</p>
+                <div class="admin-card fade-in">
+                    <div class="section-header">
+                        <div class="section-icon-badge" style="background:linear-gradient(135deg,#f59e0b,#fbbf24);"><i
+                                class="fas fa-home"></i></div>
+                        <div>
+                            <h2>Hero Section</h2>
+                            <p class="section-subtitle">Main headline and subtitle shown at the top of your portfolio</p>
+                        </div>
                     </div>
+                    <form method="POST">
+                        <div class="form-group">
+                            <label><i class="fas fa-heading"></i> Headline</label>
+                            <input type="text" name="hero_title"
+                                value="<?php echo isset($hero['title']) ? htmlspecialchars($hero['title']) : ''; ?>" required>
+                        </div>
+                        <div class="form-group">
+                            <label><i class="fas fa-align-left"></i> Subtitle</label>
+                            <input type="text" name="hero_subtitle"
+                                value="<?php echo isset($hero['subtitle']) ? htmlspecialchars($hero['subtitle']) : ''; ?>"
+                                required>
+                        </div>
+                        <button type="submit" name="update_hero" class="btn-primary"><i class="fas fa-save"></i> Update
+                            Hero</button>
+                    </form>
                 </div>
-                <form method="POST">
-                    <div class="form-group">
-                        <label><i class="fas fa-heading"></i> Headline</label>
-                        <input type="text" name="hero_title"
-                            value="<?php echo isset($hero['title']) ? htmlspecialchars($hero['title']) : ''; ?>" required>
+                <!-- Navbar Logo Upload -->
+                <div class="admin-card fade-in">
+                    <div class="section-header">
+                        <div class="section-icon-badge" style="background:linear-gradient(135deg,#0ea5e9,#38bdf8);"><i
+                                class="fas fa-image"></i></div>
+                        <div>
+                            <h2>Navbar Logo</h2>
+                            <p class="section-subtitle">Upload an image logo for the navigation bar (replaces text logo)</p>
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label><i class="fas fa-align-left"></i> Subtitle</label>
-                        <input type="text" name="hero_subtitle"
-                            value="<?php echo isset($hero['subtitle']) ? htmlspecialchars($hero['subtitle']) : ''; ?>"
-                            required>
-                    </div>
-                    <button type="submit" name="update_hero" class="btn-primary"><i class="fas fa-save"></i> Update
-                        Hero</button>
-                </form>
-            </div>
-            <!-- Navbar Logo Upload -->
-            <div class="admin-card fade-in">
-                <div class="section-header">
-                    <div class="section-icon-badge" style="background:linear-gradient(135deg,#0ea5e9,#38bdf8);"><i
-                            class="fas fa-image"></i></div>
-                    <div>
-                        <h2>Navbar Logo</h2>
-                        <p class="section-subtitle">Upload an image logo for the navigation bar (replaces text logo)</p>
-                    </div>
+                    <?php $navbar_logo_img = isset($site_content['navbar_logo_img']) ? $site_content['navbar_logo_img']['content_value'] : ''; ?>
+                    <?php if ($navbar_logo_img): ?>
+                            <div class="img-preview-block">
+                                <p>Current navbar logo:</p><img src="../uploads/<?php echo htmlspecialchars($navbar_logo_img); ?>"
+                                    alt="Navbar Logo">
+                            </div>
+                    <?php else: ?>
+                            <div class="upload-zone" style="margin-bottom:1.2rem;"><i class="fas fa-image"></i>
+                                <p>No navbar logo uploaded yet</p>
+                            </div>
+                    <?php endif; ?>
+                    <form method="POST" enctype="multipart/form-data" style="margin-top:1rem;">
+                        <div class="form-group">
+                            <label><i class="fas fa-upload"></i> Upload New Logo</label>
+                            <input type="file" name="navbar_logo_img" accept="image/*">
+                        </div>
+                        <button type="submit" name="update_navbar_logo" class="btn-primary"><i class="fas fa-save"></i> Update
+                            Navbar Logo</button>
+                    </form>
                 </div>
-                <?php $navbar_logo_img = isset($site_content['navbar_logo_img']) ? $site_content['navbar_logo_img']['content_value'] : ''; ?>
-                <?php if ($navbar_logo_img): ?>
-                    <div class="img-preview-block">
-                        <p>Current navbar logo:</p><img src="../uploads/<?php echo htmlspecialchars($navbar_logo_img); ?>"
-                            alt="Navbar Logo">
-                    </div>
-                <?php else: ?>
-                    <div class="upload-zone" style="margin-bottom:1.2rem;"><i class="fas fa-image"></i>
-                        <p>No navbar logo uploaded yet</p>
-                    </div>
-                <?php endif; ?>
-                <form method="POST" enctype="multipart/form-data" style="margin-top:1rem;">
-                    <div class="form-group">
-                        <label><i class="fas fa-upload"></i> Upload New Logo</label>
-                        <input type="file" name="navbar_logo_img" accept="image/*">
-                    </div>
-                    <button type="submit" name="update_navbar_logo" class="btn-primary"><i class="fas fa-save"></i> Update
-                        Navbar Logo</button>
-                </form>
-            </div>
         <?php endif; ?>
 
         <?php if ($active_tab == 'about'): ?>
-            <div class="admin-card fade-in">
-                <div class="section-header">
-                    <div class="section-icon-badge" style="background:linear-gradient(135deg,#10b981,#34d399);"><i
-                            class="fas fa-user"></i></div>
-                    <div>
-                        <h2>About Me</h2>
-                        <p class="section-subtitle">Your profile info, bio, and photo displayed on the portfolio</p>
-                    </div>
-                </div>
-                <form method="POST" enctype="multipart/form-data">
-                    <!-- Profile Photo + Meta -->
-                    <div class="profile-upload-row">
-                        <div class="profile-upload-zone" id="profileDropZone"
-                            onclick="document.getElementById('profileImageInput').click()" title="Click to change photo">
-                            <?php if (!empty($about['profile_image'])): ?>
-                                <img src="../uploads/<?php echo htmlspecialchars($about['profile_image']); ?>" alt="Profile"
-                                    id="profilePreview">
-                            <?php else: ?>
-                                <div class="upload-placeholder" id="uploadPlaceholder"><i
-                                        class="fas fa-user-circle"></i><span>Upload Photo</span></div>
-                            <?php endif; ?>
-                            <div class="upload-overlay"><i class="fas fa-camera"></i><span>Change</span></div>
-                            <input type="file" name="profile_image" id="profileImageInput" accept="image/*"
-                                class="hidden-file-input">
+                <div class="admin-card fade-in">
+                    <div class="section-header">
+                        <div class="section-icon-badge" style="background:linear-gradient(135deg,#10b981,#34d399);"><i
+                                class="fas fa-user"></i></div>
+                        <div>
+                            <h2>About Me</h2>
+                            <p class="section-subtitle">Your profile info, bio, and photo displayed on the portfolio</p>
                         </div>
-                        <div class="profile-meta-fields">
-                            <div class="form-grid-2">
-                                <div class="form-group">
-                                    <label><i class="fas fa-briefcase"></i> Job Title</label>
-                                    <input type="text" name="about_job_title" placeholder="e.g. Full Stack Developer"
-                                        value="<?php echo htmlspecialchars($about['job_title'] ?? ''); ?>">
-                                </div>
-                                <div class="form-group">
-                                    <label><i class="fas fa-map-marker-alt"></i> Location</label>
-                                    <input type="text" name="about_location" placeholder="e.g. Chennai, India"
-                                        value="<?php echo htmlspecialchars($about['location'] ?? ''); ?>">
-                                </div>
-                                <div class="form-group">
-                                    <label><i class="fas fa-clock"></i> Years of Experience</label>
-                                    <input type="number" name="about_years_exp" min="0" max="60" placeholder="3"
-                                        value="<?php echo htmlspecialchars($about['years_exp'] ?? ''); ?>">
-                                </div>
-                                <div class="form-group">
-                                    <label><i class="fas fa-file-pdf"></i> CV / Resume URL</label>
-                                    <input type="url" name="about_cv_url" placeholder="https://..."
-                                        value="<?php echo htmlspecialchars($about['cv_url'] ?? ''); ?>">
+                    </div>
+                    <form method="POST" enctype="multipart/form-data">
+                        <!-- Profile Photo + Meta -->
+                        <div class="profile-upload-row">
+                            <div class="profile-upload-zone" id="profileDropZone"
+                                onclick="document.getElementById('profileImageInput').click()" title="Click to change photo">
+                                <?php if (!empty($about['profile_image'])): ?>
+                                        <img src="../uploads/<?php echo htmlspecialchars($about['profile_image']); ?>" alt="Profile"
+                                            id="profilePreview">
+                                <?php else: ?>
+                                        <div class="upload-placeholder" id="uploadPlaceholder"><i
+                                                class="fas fa-user-circle"></i><span>Upload Photo</span></div>
+                                <?php endif; ?>
+                                <div class="upload-overlay"><i class="fas fa-camera"></i><span>Change</span></div>
+                                <input type="file" name="profile_image" id="profileImageInput" accept="image/*"
+                                    class="hidden-file-input">
+                            </div>
+                            <div class="profile-meta-fields">
+                                <div class="form-grid-2">
+                                    <div class="form-group">
+                                        <label><i class="fas fa-briefcase"></i> Job Title</label>
+                                        <input type="text" name="about_job_title" placeholder="e.g. Full Stack Developer"
+                                            value="<?php echo htmlspecialchars($about['job_title'] ?? ''); ?>">
+                                    </div>
+                                    <div class="form-group">
+                                        <label><i class="fas fa-map-marker-alt"></i> Location</label>
+                                        <input type="text" name="about_location" placeholder="e.g. Chennai, India"
+                                            value="<?php echo htmlspecialchars($about['location'] ?? ''); ?>">
+                                    </div>
+                                    <div class="form-group">
+                                        <label><i class="fas fa-clock"></i> Years of Experience</label>
+                                        <input type="number" name="about_years_exp" min="0" max="60" placeholder="3"
+                                            value="<?php echo htmlspecialchars($about['years_exp'] ?? ''); ?>">
+                                    </div>
+                                    <div class="form-group">
+                                        <label><i class="fas fa-file-pdf"></i> CV / Resume URL</label>
+                                        <input type="url" name="about_cv_url" placeholder="https://..."
+                                            value="<?php echo htmlspecialchars($about['cv_url'] ?? ''); ?>">
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                    <div class="form-group">
-                        <label><i class="fas fa-align-left"></i> Bio <span class="char-count" id="bioCount"></span></label>
-                        <textarea name="about_content" rows="6" id="bioTextarea" placeholder="Tell your story..."
-                            required><?php echo isset($about['content']) ? htmlspecialchars($about['content']) : ''; ?></textarea>
-                    </div>
-                    <button type="submit" name="update_about" class="btn-primary"><i class="fas fa-save"></i> Save About
-                        Section</button>
-                </form>
-            </div>
+                        <div class="form-group">
+                            <label><i class="fas fa-align-left"></i> Bio <span class="char-count" id="bioCount"></span></label>
+                            <textarea name="about_content" rows="6" id="bioTextarea" placeholder="Tell your story..."
+                                required><?php echo isset($about['content']) ? htmlspecialchars($about['content']) : ''; ?></textarea>
+                        </div>
+                        <button type="submit" name="update_about" class="btn-primary"><i class="fas fa-save"></i> Save About
+                            Section</button>
+                    </form>
+                </div>
         <?php endif; ?>
 
         <?php if ($active_tab == 'skills'): ?>
-            <div class="admin-card fade-in">
-                <h2><i class="fas fa-code"></i> Manage Skills</h2>
-                <form method="POST">
-                    <div style="display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem;">
-                        <div class="form-group" style="flex: 2; min-width: 200px;">
-                            <label>Skill Name</label>
-                            <input type="text" name="skill_name" placeholder="e.g. React" required>
+                <div class="admin-card fade-in">
+                    <h2><i class="fas fa-code"></i> Manage Skills</h2>
+                    <form method="POST">
+                        <div style="display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem;">
+                            <div class="form-group" style="flex: 2; min-width: 200px;">
+                                <label>Skill Name</label>
+                                <input type="text" name="skill_name" placeholder="e.g. React" required>
+                            </div>
+                            <div class="form-group" style="flex: 1; min-width: 120px;">
+                                <label>Percentage (%)</label>
+                                <input type="number" name="skill_percentage" min="0" max="100" placeholder="85" required>
+                            </div>
                         </div>
-                        <div class="form-group" style="flex: 1; min-width: 120px;">
-                            <label>Percentage (%)</label>
-                            <input type="number" name="skill_percentage" min="0" max="100" placeholder="85" required>
+                        <div class="form-group" style="margin-bottom: 1rem;">
+                            <label>Description</label>
+                            <textarea name="skill_description" rows="2"
+                                placeholder="Brief description of your expertise..."></textarea>
                         </div>
-                    </div>
-                    <div class="form-group" style="margin-bottom: 1rem;">
-                        <label>Description</label>
-                        <textarea name="skill_description" rows="2"
-                            placeholder="Brief description of your expertise..."></textarea>
-                    </div>
-                    <div style="display: flex; gap: 1rem; align-items: flex-end; flex-wrap: wrap;">
-                        <div class="form-group" style="flex: 2; min-width: 200px;">
-                            <label>Tags <span style="font-weight: normal; color: var(--text-light);">(comma
-                                    separated)</span></label>
-                            <input type="text" name="skill_tags" placeholder="e.g. Framework, CMS, Backend">
+                        <div style="display: flex; gap: 1rem; align-items: flex-end; flex-wrap: wrap;">
+                            <div class="form-group" style="flex: 2; min-width: 200px;">
+                                <label>Tags <span style="font-weight: normal; color: var(--text-light);">(comma
+                                        separated)</span></label>
+                                <input type="text" name="skill_tags" placeholder="e.g. Framework, CMS, Backend">
+                            </div>
+                            <div class="form-group">
+                                <button type="submit" name="add_skill" class="btn-primary">Add Skill</button>
+                            </div>
                         </div>
-                        <div class="form-group">
-                            <button type="submit" name="add_skill" class="btn-primary">Add Skill</button>
-                        </div>
-                    </div>
-                </form>
+                    </form>
 
-                <div class="table-responsive">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Skill</th>
-                                <th>Percentage</th>
-                                <th>Description</th>
-                                <th>Tags</th>
-                                <th>Action</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php while ($skill = $skills->fetch_assoc()): ?>
-                                <tr>
-                                    <td style="font-weight: 500;"><?php echo htmlspecialchars($skill['skill_name']); ?></td>
-                                    <td>
-                                        <div style="display: flex; align-items: center; gap: 1rem;">
-                                            <div
-                                                style="width: 100px; height: 6px; background: #f1f5f9; border-radius: 10px; overflow: hidden;">
-                                                <div
-                                                    style="width: <?php echo $skill['percentage']; ?>%; height: 100%; background: var(--accent-dark);">
-                                                </div>
-                                            </div>
-                                            <span style="font-size: 0.9rem;"><?php echo $skill['percentage']; ?>%</span>
-                                        </div>
-                                    </td>
-                                    <td style="font-size: 0.85rem; color: var(--text-light); max-width: 200px;">
-                                        <?php echo htmlspecialchars($skill['description'] ?? ''); ?>
-                                    </td>
-                                    <td>
-                                        <?php
-                                        $skill_tags = array_filter(array_map('trim', explode(',', $skill['tags'] ?? '')));
-                                        foreach ($skill_tags as $tag) {
-                                            echo '<span style="display:inline-block; padding:0.2rem 0.5rem; background:#e0f2fe; color:#0284c7; border-radius:4px; font-size:0.72rem; font-weight:600; margin:0.15rem;">' . htmlspecialchars($tag) . '</span>';
-                                        }
-                                        ?>
-                                    </td>
-                                    <td>
-                                        <div style="display:flex;gap:0.5rem;align-items:center;">
-                                            <button type="button" class="btn-sm btn-edit"
-                                                onclick="toggleEditRow('sk-<?php echo $skill['id']; ?>')"><i
-                                                    class="fas fa-edit"></i></button>
-                                            <a href="?tab=skills&delete_skill=<?php echo $skill['id']; ?>"
-                                                class="btn-sm btn-danger" onclick="return confirm('Delete this skill?')"><i
-                                                    class="fas fa-trash"></i></a>
-                                        </div>
-                                    </td>
-                                </tr>
-                                <!-- Inline Edit Row -->
-                                <tr id="sk-<?php echo $skill['id']; ?>" style="display:none;background:#f8fafc;">
-                                    <td colspan="5" style="padding:1.2rem;">
-                                        <form method="POST"
-                                            style="display:grid;grid-template-columns:2fr 1fr 2fr 2fr auto;gap:0.8rem;align-items:flex-end;">
-                                            <input type="hidden" name="edit_skill_id" value="<?php echo $skill['id']; ?>">
-                                            <div class="form-group" style="margin:0;">
-                                                <label style="font-size:0.78rem;">Skill Name</label>
-                                                <input type="text" name="edit_skill_name"
-                                                    value="<?php echo htmlspecialchars($skill['skill_name']); ?>" required
-                                                    style="font-size:0.85rem;">
-                                            </div>
-                                            <div class="form-group" style="margin:0;">
-                                                <label style="font-size:0.78rem;">%</label>
-                                                <input type="number" name="edit_skill_percentage" min="0" max="100"
-                                                    value="<?php echo $skill['percentage']; ?>" required
-                                                    style="font-size:0.85rem;">
-                                            </div>
-                                            <div class="form-group" style="margin:0;">
-                                                <label style="font-size:0.78rem;">Description</label>
-                                                <input type="text" name="edit_skill_description"
-                                                    value="<?php echo htmlspecialchars($skill['description'] ?? ''); ?>"
-                                                    style="font-size:0.85rem;">
-                                            </div>
-                                            <div class="form-group" style="margin:0;">
-                                                <label style="font-size:0.78rem;">Tags</label>
-                                                <input type="text" name="edit_skill_tags"
-                                                    value="<?php echo htmlspecialchars($skill['tags'] ?? ''); ?>"
-                                                    style="font-size:0.85rem;">
-                                            </div>
-                                            <button type="submit" name="update_skill" class="btn-primary"
-                                                style="padding:0.6rem 1rem;font-size:0.85rem;"><i class="fas fa-save"></i>
-                                                Save</button>
-                                        </form>
-                                    </td>
-                                </tr>
-                            <?php endwhile; ?>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        <?php endif; ?>
-
-        <?php if ($active_tab == 'projects'): ?>
-            <div class="admin-card fade-in">
-                <h2><i class="fas fa-briefcase"></i> Manage Projects</h2>
-                <form method="POST" enctype="multipart/form-data">
-                    <div class="form-group">
-                        <label>Project Title</label>
-                        <input type="text" name="project_title" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Description</label>
-                        <textarea name="project_desc" rows="3" required></textarea>
-                    </div>
-                    <div class="form-group">
-                        <label>Tech Stack (comma separated)</label>
-                        <input type="text" name="project_tech" placeholder="PHP, MySQL, JS">
-                    </div>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                        <div class="form-group">
-                            <label>GitHub Link</label>
-                            <input type="text" name="project_github" placeholder="https://github.com/...">
-                        </div>
-                        <div class="form-group">
-                            <label>Live Demo Link</label>
-                            <input type="text" name="project_demo" placeholder="https://...">
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label>Project Image</label>
-                        <input type="file" name="project_image" required>
-                    </div>
-                    <button type="submit" name="add_project" class="btn-primary">Add Project</button>
-                </form>
-
-                <div style="margin-top: 3rem;">
-                    <h3>Existing Projects</h3>
                     <div class="table-responsive">
                         <table>
                             <thead>
                                 <tr>
-                                    <th>Title</th>
-                                    <th>Tech Stack</th>
+                                    <th>Skill</th>
+                                    <th>Percentage</th>
+                                    <th>Description</th>
+                                    <th>Tags</th>
                                     <th>Action</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                <?php while ($proj = $projects->fetch_assoc()): ?>
-                                    <tr>
-                                        <td style="font-weight: 500;"><?php echo htmlspecialchars($proj['title']); ?></td>
-                                        <td>
-                                            <?php
-                                            $techs = explode(',', $proj['tech_stack']);
-                                            foreach ($techs as $tech) {
-                                                echo '<span style="display: inline-block; background: #e0f2fe; color: #0284c7; padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; margin-right: 4px; margin-bottom: 4px;">' . trim($tech) . '</span>';
-                                            }
-                                            ?>
-                                        </td>
-                                        <td>
-                                            <div style="display:flex;gap:0.5rem;align-items:center;">
-                                                <button type="button" class="btn-sm btn-edit"
-                                                    onclick="toggleEditRow('pr-<?php echo $proj['id']; ?>')"><i
-                                                        class="fas fa-edit"></i></button>
-                                                <a href="?tab=projects&delete_project=<?php echo $proj['id']; ?>"
-                                                    class="btn-sm btn-danger"
-                                                    onclick="return confirm('Delete this project?')"><i
-                                                        class="fas fa-trash"></i></a>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                    <!-- Inline Edit Row -->
-                                    <tr id="pr-<?php echo $proj['id']; ?>" style="display:none;background:#f8fafc;">
-                                        <td colspan="3" style="padding:1.2rem;">
-                                            <form method="POST" enctype="multipart/form-data"
-                                                style="display:grid;grid-template-columns:1fr 1fr;gap:0.8rem;">
-                                                <input type="hidden" name="edit_project_id" value="<?php echo $proj['id']; ?>">
-                                                <div class="form-group" style="margin:0;">
-                                                    <label style="font-size:0.78rem;">Title</label>
-                                                    <input type="text" name="edit_project_title"
-                                                        value="<?php echo htmlspecialchars($proj['title']); ?>" required
-                                                        style="font-size:0.85rem;">
+                                <?php while ($skill = $skills->fetch_assoc()): ?>
+                                        <tr>
+                                            <td style="font-weight: 500;"><?php echo htmlspecialchars($skill['skill_name']); ?></td>
+                                            <td>
+                                                <div style="display: flex; align-items: center; gap: 1rem;">
+                                                    <div
+                                                        style="width: 100px; height: 6px; background: #f1f5f9; border-radius: 10px; overflow: hidden;">
+                                                        <div
+                                                            style="width: <?php echo $skill['percentage']; ?>%; height: 100%; background: var(--accent-dark);">
+                                                        </div>
+                                                    </div>
+                                                    <span style="font-size: 0.9rem;"><?php echo $skill['percentage']; ?>%</span>
                                                 </div>
-                                                <div class="form-group" style="margin:0;">
-                                                    <label style="font-size:0.78rem;">Tech Stack</label>
-                                                    <input type="text" name="edit_project_tech"
-                                                        value="<?php echo htmlspecialchars($proj['tech_stack']); ?>"
-                                                        style="font-size:0.85rem;">
+                                            </td>
+                                            <td style="font-size: 0.85rem; color: var(--text-light); max-width: 200px;">
+                                                <?php echo htmlspecialchars($skill['description'] ?? ''); ?>
+                                            </td>
+                                            <td>
+                                                <?php
+                                                $skill_tags = array_filter(array_map('trim', explode(',', $skill['tags'] ?? '')));
+                                                foreach ($skill_tags as $tag) {
+                                                    echo '<span style="display:inline-block; padding:0.2rem 0.5rem; background:#e0f2fe; color:#0284c7; border-radius:4px; font-size:0.72rem; font-weight:600; margin:0.15rem;">' . htmlspecialchars($tag) . '</span>';
+                                                }
+                                                ?>
+                                            </td>
+                                            <td>
+                                                <div style="display:flex;gap:0.5rem;align-items:center;">
+                                                    <button type="button" class="btn-sm btn-edit"
+                                                        onclick="toggleEditRow('sk-<?php echo $skill['id']; ?>')"><i
+                                                            class="fas fa-edit"></i></button>
+                                                    <a href="?tab=skills&delete_skill=<?php echo $skill['id']; ?>"
+                                                        class="btn-sm btn-danger" onclick="return confirm('Delete this skill?')"><i
+                                                            class="fas fa-trash"></i></a>
                                                 </div>
-                                                <div class="form-group" style="grid-column:1/-1;margin:0;">
-                                                    <label style="font-size:0.78rem;">Description</label>
-                                                    <textarea name="edit_project_desc" rows="2"
-                                                        style="font-size:0.85rem;"><?php echo htmlspecialchars($proj['description']); ?></textarea>
-                                                </div>
-                                                <div class="form-group" style="margin:0;">
-                                                    <label style="font-size:0.78rem;">GitHub Link</label>
-                                                    <input type="text" name="edit_project_github"
-                                                        value="<?php echo htmlspecialchars($proj['github_link']); ?>"
-                                                        style="font-size:0.85rem;">
-                                                </div>
-                                                <div class="form-group" style="margin:0;">
-                                                    <label style="font-size:0.78rem;">Demo Link</label>
-                                                    <input type="text" name="edit_project_demo"
-                                                        value="<?php echo htmlspecialchars($proj['demo_link']); ?>"
-                                                        style="font-size:0.85rem;">
-                                                </div>
-                                                <div class="form-group" style="grid-column:1/-1;margin:0;">
-                                                    <label style="font-size:0.78rem;">New Image <small
-                                                            style="font-weight:normal;">(leave blank to keep
-                                                            current)</small></label>
-                                                    <input type="file" name="edit_project_image" accept="image/*"
-                                                        style="font-size:0.85rem;">
-                                                </div>
-                                                <div style="grid-column:1/-1;">
-                                                    <button type="submit" name="update_project" class="btn-primary"
-                                                        style="padding:0.6rem 1rem;font-size:0.85rem;"><i
-                                                            class="fas fa-save"></i> Save Changes</button>
-                                                </div>
-                                            </form>
-                                        </td>
-                                    </tr>
+                                            </td>
+                                        </tr>
+                                        <!-- Inline Edit Row -->
+                                        <tr id="sk-<?php echo $skill['id']; ?>" style="display:none;background:#f8fafc;">
+                                            <td colspan="5" style="padding:1.2rem;">
+                                                <form method="POST"
+                                                    style="display:grid;grid-template-columns:2fr 1fr 2fr 2fr auto;gap:0.8rem;align-items:flex-end;">
+                                                    <input type="hidden" name="edit_skill_id" value="<?php echo $skill['id']; ?>">
+                                                    <div class="form-group" style="margin:0;">
+                                                        <label style="font-size:0.78rem;">Skill Name</label>
+                                                        <input type="text" name="edit_skill_name"
+                                                            value="<?php echo htmlspecialchars($skill['skill_name']); ?>" required
+                                                            style="font-size:0.85rem;">
+                                                    </div>
+                                                    <div class="form-group" style="margin:0;">
+                                                        <label style="font-size:0.78rem;">%</label>
+                                                        <input type="number" name="edit_skill_percentage" min="0" max="100"
+                                                            value="<?php echo $skill['percentage']; ?>" required
+                                                            style="font-size:0.85rem;">
+                                                    </div>
+                                                    <div class="form-group" style="margin:0;">
+                                                        <label style="font-size:0.78rem;">Description</label>
+                                                        <input type="text" name="edit_skill_description"
+                                                            value="<?php echo htmlspecialchars($skill['description'] ?? ''); ?>"
+                                                            style="font-size:0.85rem;">
+                                                    </div>
+                                                    <div class="form-group" style="margin:0;">
+                                                        <label style="font-size:0.78rem;">Tags</label>
+                                                        <input type="text" name="edit_skill_tags"
+                                                            value="<?php echo htmlspecialchars($skill['tags'] ?? ''); ?>"
+                                                            style="font-size:0.85rem;">
+                                                    </div>
+                                                    <button type="submit" name="update_skill" class="btn-primary"
+                                                        style="padding:0.6rem 1rem;font-size:0.85rem;"><i class="fas fa-save"></i>
+                                                        Save</button>
+                                                </form>
+                                            </td>
+                                        </tr>
                                 <?php endwhile; ?>
                             </tbody>
                         </table>
                     </div>
                 </div>
-            </div>
         <?php endif; ?>
 
-        <?php if ($active_tab == 'internships'): ?>
-            <?php
-            // Fetch fellowship data grouped by internship
-            $all_fs = $conn->query("SELECT * FROM fellowship_skills ORDER BY internship_id, created_at");
-            $all_fw = $conn->query("SELECT * FROM fellowship_frameworks ORDER BY internship_id, created_at");
-            $all_fp = $conn->query("SELECT * FROM fellowship_projects ORDER BY internship_id, created_at");
-            $fs_map = $fw_map = $fp_map = [];
-            if ($all_fs) {
-                foreach ($all_fs->fetch_all(MYSQLI_ASSOC) as $r) {
-                    $fs_map[$r['internship_id']][] = $r;
-                }
-            }
-            if ($all_fw) {
-                foreach ($all_fw->fetch_all(MYSQLI_ASSOC) as $r) {
-                    $fw_map[$r['internship_id']][] = $r;
-                }
-            }
-            if ($all_fp) {
-                foreach ($all_fp->fetch_all(MYSQLI_ASSOC) as $r) {
-                    $fp_map[$r['internship_id']][] = $r;
-                }
-            }
-            ?>
-            <div class="admin-card fade-in">
-                <h2><i class="fas fa-graduation-cap"></i> Manage Fellowship & Experience</h2>
-
-                <!-- ADD FELLOWSHIP FORM -->
-                <div
-                    style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:16px; padding:1.8rem; margin-bottom:2rem;">
-                    <h3 style="margin-bottom:1.2rem; font-size:1.1rem;"><i class="fas fa-plus-circle"
-                            style="color:var(--accent-dark);"></i> Add New Fellowship / Internship</h3>
+        <?php if ($active_tab == 'projects'): ?>
+                <div class="admin-card fade-in">
+                    <h2><i class="fas fa-briefcase"></i> Manage Projects</h2>
                     <form method="POST" enctype="multipart/form-data">
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                            <div class="form-group">
-                                <label>Company / Organization Name</label>
-                                <input type="text" name="company_name" placeholder="e.g. Google, NASSCOM" required>
-                            </div>
-                            <div class="form-group">
-                                <label>Role / Position</label>
-                                <input type="text" name="role" placeholder="e.g. Software Engineering Fellow" required>
-                            </div>
-                        </div>
                         <div class="form-group">
-                            <label>Duration</label>
-                            <input type="text" name="duration" placeholder="e.g. Jun 2024 – Aug 2024" required>
+                            <label>Project Title</label>
+                            <input type="text" name="project_title" required>
                         </div>
                         <div class="form-group">
                             <label>Description</label>
-                            <textarea name="description" rows="3"
-                                placeholder="Brief overview of the fellowship..."></textarea>
+                            <textarea name="project_desc" rows="3" required></textarea>
                         </div>
                         <div class="form-group">
-                            <label>Company Logo <small style="font-weight:normal;color:var(--text-light);">(optional, shown
-                                    in row header)</small></label>
-                            <input type="file" name="company_logo" accept="image/*">
+                            <label>Tech Stack (comma separated)</label>
+                            <input type="text" name="project_tech" placeholder="PHP, MySQL, JS">
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                            <div class="form-group">
+                                <label>GitHub Link</label>
+                                <input type="text" name="project_github" placeholder="https://github.com/...">
+                            </div>
+                            <div class="form-group">
+                                <label>Live Demo Link</label>
+                                <input type="text" name="project_demo" placeholder="https://...">
+                            </div>
                         </div>
                         <div class="form-group">
-                            <label>Fellowship Image <small style="font-weight:normal;color:var(--text-light);">(hero image
-                                    shown on front-end, optional)</small></label>
-                            <input type="file" name="fellowship_image" accept="image/*">
+                            <label>Project Image</label>
+                            <input type="file" name="project_image" required>
                         </div>
-                        <button type="submit" name="add_internship" class="btn-primary"><i class="fas fa-plus"></i> Add
-                            Fellowship</button>
+                        <button type="submit" name="add_project" class="btn-primary">Add Project</button>
                     </form>
+
+                    <div style="margin-top: 3rem;">
+                        <h3>Existing Projects</h3>
+                        <div class="table-responsive">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Title</th>
+                                        <th>Tech Stack</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php while ($proj = $projects->fetch_assoc()): ?>
+                                            <tr>
+                                                <td style="font-weight: 500;"><?php echo htmlspecialchars($proj['title']); ?></td>
+                                                <td>
+                                                    <?php
+                                                    $techs = explode(',', $proj['tech_stack']);
+                                                    foreach ($techs as $tech) {
+                                                        echo '<span style="display: inline-block; background: #e0f2fe; color: #0284c7; padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; margin-right: 4px; margin-bottom: 4px;">' . trim($tech) . '</span>';
+                                                    }
+                                                    ?>
+                                                </td>
+                                                <td>
+                                                    <div style="display:flex;gap:0.5rem;align-items:center;">
+                                                        <button type="button" class="btn-sm btn-edit"
+                                                            onclick="toggleEditRow('pr-<?php echo $proj['id']; ?>')"><i
+                                                                class="fas fa-edit"></i></button>
+                                                        <a href="?tab=projects&delete_project=<?php echo $proj['id']; ?>"
+                                                            class="btn-sm btn-danger"
+                                                            onclick="return confirm('Delete this project?')"><i
+                                                                class="fas fa-trash"></i></a>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            <!-- Inline Edit Row -->
+                                            <tr id="pr-<?php echo $proj['id']; ?>" style="display:none;background:#f8fafc;">
+                                                <td colspan="3" style="padding:1.2rem;">
+                                                    <form method="POST" enctype="multipart/form-data"
+                                                        style="display:grid;grid-template-columns:1fr 1fr;gap:0.8rem;">
+                                                        <input type="hidden" name="edit_project_id" value="<?php echo $proj['id']; ?>">
+                                                        <div class="form-group" style="margin:0;">
+                                                            <label style="font-size:0.78rem;">Title</label>
+                                                            <input type="text" name="edit_project_title"
+                                                                value="<?php echo htmlspecialchars($proj['title']); ?>" required
+                                                                style="font-size:0.85rem;">
+                                                        </div>
+                                                        <div class="form-group" style="margin:0;">
+                                                            <label style="font-size:0.78rem;">Tech Stack</label>
+                                                            <input type="text" name="edit_project_tech"
+                                                                value="<?php echo htmlspecialchars($proj['tech_stack']); ?>"
+                                                                style="font-size:0.85rem;">
+                                                        </div>
+                                                        <div class="form-group" style="grid-column:1/-1;margin:0;">
+                                                            <label style="font-size:0.78rem;">Description</label>
+                                                            <textarea name="edit_project_desc" rows="2"
+                                                                style="font-size:0.85rem;"><?php echo htmlspecialchars($proj['description']); ?></textarea>
+                                                        </div>
+                                                        <div class="form-group" style="margin:0;">
+                                                            <label style="font-size:0.78rem;">GitHub Link</label>
+                                                            <input type="text" name="edit_project_github"
+                                                                value="<?php echo htmlspecialchars($proj['github_link']); ?>"
+                                                                style="font-size:0.85rem;">
+                                                        </div>
+                                                        <div class="form-group" style="margin:0;">
+                                                            <label style="font-size:0.78rem;">Demo Link</label>
+                                                            <input type="text" name="edit_project_demo"
+                                                                value="<?php echo htmlspecialchars($proj['demo_link']); ?>"
+                                                                style="font-size:0.85rem;">
+                                                        </div>
+                                                        <div class="form-group" style="grid-column:1/-1;margin:0;">
+                                                            <label style="font-size:0.78rem;">New Image <small
+                                                                    style="font-weight:normal;">(leave blank to keep
+                                                                    current)</small></label>
+                                                            <input type="file" name="edit_project_image" accept="image/*"
+                                                                style="font-size:0.85rem;">
+                                                        </div>
+                                                        <div style="grid-column:1/-1;">
+                                                            <button type="submit" name="update_project" class="btn-primary"
+                                                                style="padding:0.6rem 1rem;font-size:0.85rem;"><i
+                                                                    class="fas fa-save"></i> Save Changes</button>
+                                                        </div>
+                                                    </form>
+                                                </td>
+                                            </tr>
+                                    <?php endwhile; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
+        <?php endif; ?>
 
-                <!-- PER-FELLOWSHIP DETAIL MANAGER -->
-                <?php foreach ($internships as $intern): ?>
-                    <div style="border:2px solid #e2e8f0; border-radius:20px; margin-bottom:2.5rem; overflow:hidden;">
-                        <!-- Header Bar -->
-                        <div
-                            style="background:linear-gradient(135deg,#1e293b,#0f172a); padding:1.2rem 1.8rem; display:flex; justify-content:space-between; align-items:center;">
-                            <div style="display:flex; align-items:center; gap:0.8rem;">
-                                <?php if ($intern['company_logo']): ?>
-                                    <img src="../uploads/<?php echo $intern['company_logo']; ?>"
-                                        style="width:38px;height:38px;border-radius:8px;object-fit:cover;border:2px solid rgba(255,255,255,0.2);">
-                                <?php else: ?>
-                                    <div
-                                        style="width:38px;height:38px;background:rgba(255,255,255,0.1);border-radius:8px;display:flex;align-items:center;justify-content:center;">
-                                        <i class="fas fa-building" style="color:#94a3b8;"></i>
-                                    </div>
-                                <?php endif; ?>
-                                <div>
-                                    <div style="color:#fff;font-weight:700;font-size:1.05rem;">
-                                        <?php echo htmlspecialchars($intern['company_name']); ?>
-                                    </div>
-                                    <div style="color:#94a3b8;font-size:0.82rem;">
-                                        <?php echo htmlspecialchars($intern['role']); ?> &bull;
-                                        <?php echo htmlspecialchars($intern['duration']); ?>
-                                    </div>
+        <?php if ($active_tab == 'internships'): ?>
+                <?php
+                // Fetch fellowship data grouped by internship
+                $all_fs = $conn->query("SELECT * FROM fellowship_skills ORDER BY internship_id, created_at");
+                $all_fw = $conn->query("SELECT * FROM fellowship_frameworks ORDER BY internship_id, created_at");
+                $all_fp = $conn->query("SELECT * FROM fellowship_projects ORDER BY internship_id, created_at");
+                $fs_map = $fw_map = $fp_map = [];
+                if ($all_fs) {
+                    foreach ($all_fs->fetch_all(MYSQLI_ASSOC) as $r) {
+                        $fs_map[$r['internship_id']][] = $r;
+                    }
+                }
+                if ($all_fw) {
+                    foreach ($all_fw->fetch_all(MYSQLI_ASSOC) as $r) {
+                        $fw_map[$r['internship_id']][] = $r;
+                    }
+                }
+                if ($all_fp) {
+                    foreach ($all_fp->fetch_all(MYSQLI_ASSOC) as $r) {
+                        $fp_map[$r['internship_id']][] = $r;
+                    }
+                }
+                ?>
+                <div class="admin-card fade-in">
+                    <h2><i class="fas fa-graduation-cap"></i> Manage Fellowship & Experience</h2>
+
+                    <!-- ADD FELLOWSHIP FORM -->
+                    <div style="background:var(--bg-surface-raised); border:1px solid var(--border-strong); border-radius:var(--radius-lg); padding:2rem; margin-bottom:2.5rem; box-shadow:inset 0 1px 0 rgba(255,255,255,0.05);">
+                        <h3 style="margin-bottom:1.5rem; font-size:1.15rem; color:var(--text-strong);"><i class="fas fa-plus-circle"
+                                style="color:var(--accent-primary); margin-right:0.5rem;"></i> Add New Fellowship / Internship</h3>
+                        <form method="POST" enctype="multipart/form-data">
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                                <div class="form-group">
+                                    <label>Company / Organization Name</label>
+                                    <input type="text" name="company_name" placeholder="e.g. Google, NASSCOM" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Role / Position</label>
+                                    <input type="text" name="role" placeholder="e.g. Software Engineering Fellow" required>
                                 </div>
                             </div>
-                            <div style="display:flex;gap:0.6rem;">
-                                <button type="button" class="btn-sm" onclick="toggleEditRow('fi-<?php echo $intern['id']; ?>')"
-                                    style="background:rgba(255,255,255,0.15);color:#fff;border:1px solid rgba(255,255,255,0.3);"><i
-                                        class="fas fa-edit"></i> Edit</button>
-                                <a href="?tab=internships&delete_internship=<?php echo $intern['id']; ?>"
-                                    class="btn-sm btn-danger"
-                                    onclick="return confirm('Delete this entire fellowship and all its data?')"><i
-                                        class="fas fa-trash"></i> Delete</a>
+                            <div class="form-group">
+                                <label>Duration</label>
+                                <input type="text" name="duration" placeholder="e.g. Jun 2024 – Aug 2024" required>
                             </div>
-                        </div>
-                        <!-- Inline Edit Panel -->
-                        <div id="fi-<?php echo $intern['id']; ?>"
-                            style="display:none;background:#f8fafc;border-bottom:1px solid #e2e8f0;padding:1.5rem;">
-                            <form method="POST" enctype="multipart/form-data"
-                                style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
-                                <input type="hidden" name="edit_intern_id" value="<?php echo $intern['id']; ?>">
-                                <div class="form-group" style="margin:0;">
-                                    <label style="font-size:0.8rem;">Company Name</label>
-                                    <input type="text" name="edit_company_name"
-                                        value="<?php echo htmlspecialchars($intern['company_name']); ?>" required
-                                        style="font-size:0.85rem;">
-                                </div>
-                                <div class="form-group" style="margin:0;">
-                                    <label style="font-size:0.8rem;">Role</label>
-                                    <input type="text" name="edit_role" value="<?php echo htmlspecialchars($intern['role']); ?>"
-                                        required style="font-size:0.85rem;">
-                                </div>
-                                <div class="form-group" style="margin:0;">
-                                    <label style="font-size:0.8rem;">Duration</label>
-                                    <input type="text" name="edit_duration"
-                                        value="<?php echo htmlspecialchars($intern['duration']); ?>" style="font-size:0.85rem;">
-                                </div>
-                                <div class="form-group" style="margin:0;">
-                                    <label style="font-size:0.8rem;">New Company Logo <small
-                                            style="font-weight:normal;">(optional)</small></label>
-                                    <input type="file" name="edit_company_logo" accept="image/*" style="font-size:0.85rem;">
-                                </div>
-                                <div class="form-group" style="grid-column:1/-1;margin:0;">
-                                    <label style="font-size:0.8rem;">Description</label>
-                                    <textarea name="edit_description" rows="3"
-                                        style="font-size:0.85rem;"><?php echo htmlspecialchars($intern['description']); ?></textarea>
-                                </div>
-                                <div class="form-group" style="grid-column:1/-1;margin:0;">
-                                    <label style="font-size:0.8rem;">New Fellowship Image <small
-                                            style="font-weight:normal;">(optional)</small></label>
-                                    <input type="file" name="edit_fellowship_image" accept="image/*" style="font-size:0.85rem;">
-                                </div>
-                                <div style="grid-column:1/-1;">
-                                    <button type="submit" name="update_internship" class="btn-primary"
-                                        style="font-size:0.85rem;"><i class="fas fa-save"></i> Save Changes</button>
-                                </div>
-                            </form>
-                        </div>
+                            <div class="form-group">
+                                <label>Description</label>
+                                <textarea name="description" rows="3"
+                                    placeholder="Brief overview of the fellowship..."></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label>Company Logo <small style="font-weight:normal;color:var(--text-light);">(optional, shown
+                                        in row header)</small></label>
+                                <input type="file" name="company_logo" accept="image/*">
+                            </div>
+                            <div class="form-group">
+                                <label>Fellowship Image <small style="font-weight:normal;color:var(--text-light);">(hero image
+                                        shown on front-end, optional)</small></label>
+                                <input type="file" name="fellowship_image" accept="image/*">
+                            </div>
+                            <button type="submit" name="add_internship" class="btn-primary"><i class="fas fa-plus"></i> Add
+                                Fellowship</button>
+                        </form>
+                    </div>
 
-                        <!-- Sub-Tabs -->
-                        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;border-bottom:1px solid #e2e8f0;">
-                            <?php
-                            $tab_styles = [
-                                'skills' => ['icon' => 'fa-bolt', 'label' => 'Skills Learned', 'color' => '#059669', 'bg' => '#ecfdf5'],
-                                'frameworks' => ['icon' => 'fa-layer-group', 'label' => 'Frameworks', 'color' => '#7c3aed', 'bg' => '#f5f3ff'],
-                                'projects' => ['icon' => 'fa-code-branch', 'label' => 'Projects Built', 'color' => '#0284c7', 'bg' => '#eff6ff'],
-                            ];
-                            foreach ($tab_styles as $tkey => $tval): ?>
+                    <!-- PER-FELLOWSHIP DETAIL MANAGER -->
+                    <?php foreach ($internships as $intern): ?>
+                            <div style="background:var(--bg-surface); border:1px solid var(--border-strong); border-radius:var(--radius-xl); margin-bottom:2.5rem; overflow:hidden; box-shadow:var(--shadow-md);">
+                                <!-- Header Bar -->
                                 <div
-                                    style="padding:1rem;text-align:center;border-right:1px solid #e2e8f0;background:#fafafa;font-weight:600;font-size:0.88rem;color:<?php echo $tval['color']; ?>;">
-                                    <i class="fas <?php echo $tval['icon']; ?>"
-                                        style="margin-right:0.4rem;"></i><?php echo $tval['label']; ?>
+                                    style="background:var(--bg-surface-highlight); padding:1.25rem 2rem; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-subtle);">
+                                    <div style="display:flex; align-items:center; gap:0.8rem;">
+                                        <?php if ($intern['company_logo']): ?>
+                                                <img src="../uploads/<?php echo $intern['company_logo']; ?>"
+                                                    style="width:38px;height:38px;border-radius:8px;object-fit:cover;border:2px solid rgba(255,255,255,0.2);">
+                                        <?php else: ?>
+                                                <div
+                                                    style="width:38px;height:38px;background:rgba(255,255,255,0.1);border-radius:8px;display:flex;align-items:center;justify-content:center;">
+                                                    <i class="fas fa-building" style="color:#94a3b8;"></i>
+                                                </div>
+                                        <?php endif; ?>
+                                        <div>
+                                            <div style="color:#fff;font-weight:700;font-size:1.05rem;">
+                                                <?php echo htmlspecialchars($intern['company_name']); ?>
+                                            </div>
+                                            <div style="color:#94a3b8;font-size:0.82rem;">
+                                                <?php echo htmlspecialchars($intern['role']); ?> &bull;
+                                                <?php echo htmlspecialchars($intern['duration']); ?>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div style="display:flex;gap:0.75rem;">
+                                        <button type="button" class="btn-sm btn-edit" onclick="toggleEditRow('fi-<?php echo $intern['id']; ?>')"><i
+                                                class="fas fa-edit"></i> Edit</button>
+                                        <a href="?tab=internships&delete_internship=<?php echo $intern['id']; ?>"
+                                            class="btn-sm btn-danger"
+                                            onclick="return confirm('Delete this entire fellowship and all its data?')"><i
+                                                class="fas fa-trash"></i> Delete</a>
+                                    </div>
                                 </div>
-                            <?php endforeach; ?>
-                        </div>
+                                <!-- Inline Edit Panel -->
+                                <div id="fi-<?php echo $intern['id']; ?>"
+                                    style="display:none;background:var(--bg-surface-raised);border-bottom:1px solid var(--border-strong);padding:2rem;">
+                                    <form method="POST" enctype="multipart/form-data"
+                                        style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+                                        <input type="hidden" name="edit_intern_id" value="<?php echo $intern['id']; ?>">
+                                        <div class="form-group" style="margin:0;">
+                                            <label style="font-size:0.8rem;">Company Name</label>
+                                            <input type="text" name="edit_company_name"
+                                                value="<?php echo htmlspecialchars($intern['company_name']); ?>" required
+                                                style="font-size:0.85rem;">
+                                        </div>
+                                        <div class="form-group" style="margin:0;">
+                                            <label style="font-size:0.8rem;">Role</label>
+                                            <input type="text" name="edit_role" value="<?php echo htmlspecialchars($intern['role']); ?>"
+                                                required style="font-size:0.85rem;">
+                                        </div>
+                                        <div class="form-group" style="margin:0;">
+                                            <label style="font-size:0.8rem;">Duration</label>
+                                            <input type="text" name="edit_duration"
+                                                value="<?php echo htmlspecialchars($intern['duration']); ?>" style="font-size:0.85rem;">
+                                        </div>
+                                        <div class="form-group" style="margin:0;">
+                                            <label style="font-size:0.8rem;">New Company Logo <small
+                                                    style="font-weight:normal;">(optional)</small></label>
+                                            <input type="file" name="edit_company_logo" accept="image/*" style="font-size:0.85rem;">
+                                        </div>
+                                        <div class="form-group" style="grid-column:1/-1;margin:0;">
+                                            <label style="font-size:0.8rem;">Description</label>
+                                            <textarea name="edit_description" rows="3"
+                                                style="font-size:0.85rem;"><?php echo htmlspecialchars($intern['description']); ?></textarea>
+                                        </div>
+                                        <div class="form-group" style="grid-column:1/-1;margin:0;">
+                                            <label style="font-size:0.8rem;">New Fellowship Image <small
+                                                    style="font-weight:normal;">(optional)</small></label>
+                                            <input type="file" name="edit_fellowship_image" accept="image/*" style="font-size:0.85rem;">
+                                        </div>
+                                        <div style="grid-column:1/-1;">
+                                            <button type="submit" name="update_internship" class="btn-primary"
+                                                style="font-size:0.85rem;"><i class="fas fa-save"></i> Save Changes</button>
+                                        </div>
+                                    </form>
+                                </div>
 
-                        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0;">
-
-                            <!-- SKILLS COLUMN -->
-                            <div style="padding:1.5rem;border-right:1px solid #e2e8f0;">
-                                <form method="POST" style="margin-bottom:1rem;">
-                                    <input type="hidden" name="fellowship_internship_id" value="<?php echo $intern['id']; ?>">
-                                    <div class="form-group" style="margin-bottom:0.6rem;">
-                                        <input type="text" name="fs_skill_name" placeholder="Skill name (e.g. Python)" required
-                                            style="font-size:0.88rem;">
-                                    </div>
-                                    <div class="form-group" style="margin-bottom:0.6rem;">
-                                        <select name="fs_proficiency"
-                                            style="width:100%;padding:0.55rem 0.8rem;border:1px solid #e2e8f0;border-radius:8px;font-size:0.87rem;background:#f8fafc;color:var(--text-color);">
-                                            <option value="Beginner">Beginner</option>
-                                            <option value="Intermediate">Intermediate</option>
-                                            <option value="Advanced">Advanced</option>
-                                        </select>
-                                    </div>
-                                    <div class="form-group" style="margin-bottom:0.6rem;">
-                                        <input type="text" name="fs_description" placeholder="Brief description"
-                                            style="font-size:0.88rem;">
-                                    </div>
-                                    <button type="submit" name="add_fellowship_skill"
-                                        style="width:100%;padding:0.5rem;background:#ecfdf5;color:#059669;border:1px solid #6ee7b7;border-radius:8px;cursor:pointer;font-weight:600;font-size:0.85rem;"><i
-                                            class="fas fa-plus"></i> Add Skill</button>
-                                </form>
-                                <?php if (!empty($fs_map[$intern['id']])): ?>
-                                    <div style="display:flex;flex-direction:column;gap:0.5rem;">
-                                        <?php foreach ($fs_map[$intern['id']] as $fs): ?>
+                                <!-- Sub-Tabs -->
+                                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;border-bottom:1px solid var(--border-strong);">
+                                    <?php
+                                    $tab_styles = [
+                                        'skills' => ['icon' => 'fa-bolt', 'label' => 'Skills Learned', 'color' => 'var(--success)', 'bg' => 'var(--success-bg)'],
+                                        'frameworks' => ['icon' => 'fa-layer-group', 'label' => 'Frameworks', 'color' => 'var(--accent-secondary)', 'bg' => 'var(--accent-subtle)'],
+                                        'projects' => ['icon' => 'fa-code-branch', 'label' => 'Projects Built', 'color' => 'var(--info)', 'bg' => 'var(--info-bg)'],
+                                    ];
+                                    foreach ($tab_styles as $tkey => $tval): ?>
                                             <div
-                                                style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:0.5rem 0.8rem;display:flex;justify-content:space-between;align-items:center;">
-                                                <div>
-                                                    <span
-                                                        style="font-weight:600;font-size:0.85rem;color:#065f46;"><?php echo htmlspecialchars($fs['skill_name']); ?></span>
-                                                    <span
-                                                        style="font-size:0.72rem;background:#d1fae5;color:#047857;padding:0.1rem 0.4rem;border-radius:4px;margin-left:0.4rem;"><?php echo $fs['proficiency']; ?></span>
-                                                </div>
-                                                <a href="?tab=internships&delete_fs=<?php echo $fs['id']; ?>"
-                                                    style="color:#ef4444;font-size:0.8rem;" onclick="return confirm('Remove skill?')"><i
-                                                        class="fas fa-times"></i></a>
+                                                style="padding:1.2rem;text-align:center;border-right:1px solid var(--border-subtle);background:var(--bg-surface);font-weight:600;font-size:0.88rem;color:<?php echo $tval['color']; ?>;">
+                                                <i class="fas <?php echo $tval['icon']; ?>"
+                                                    style="margin-right:0.5rem; font-size:1.1rem;"></i><?php echo $tval['label']; ?>
                                             </div>
-                                        <?php endforeach; ?>
-                                    </div>
-                                <?php else: ?>
-                                    <p style="font-size:0.82rem;color:#94a3b8;text-align:center;">No skills added yet.</p>
-                                <?php endif; ?>
-                            </div>
+                                    <?php endforeach; ?>
+                                </div>
 
-                            <!-- FRAMEWORKS COLUMN -->
-                            <div style="padding:1.5rem;border-right:1px solid #e2e8f0;">
-                                <form method="POST" style="margin-bottom:1rem;">
-                                    <input type="hidden" name="fw_internship_id" value="<?php echo $intern['id']; ?>">
-                                    <div class="form-group" style="margin-bottom:0.6rem;">
-                                        <input type="text" name="fw_name" placeholder="Framework (e.g. Django)" required
-                                            style="font-size:0.88rem;">
-                                    </div>
-                                    <div class="form-group" style="margin-bottom:0.6rem;">
-                                        <select name="fw_category"
-                                            style="width:100%;padding:0.55rem 0.8rem;border:1px solid #e2e8f0;border-radius:8px;font-size:0.87rem;background:#f8fafc;color:var(--text-color);">
-                                            <option value="Frontend">Frontend</option>
-                                            <option value="Backend">Backend</option>
-                                            <option value="Mobile">Mobile</option>
-                                            <option value="DevOps">DevOps</option>
-                                            <option value="Database">Database</option>
-                                            <option value="AI/ML">AI/ML</option>
-                                            <option value="Other">Other</option>
-                                        </select>
-                                    </div>
-                                    <div class="form-group" style="margin-bottom:0.6rem;">
-                                        <input type="text" name="fw_description" placeholder="Brief description"
-                                            style="font-size:0.88rem;">
-                                    </div>
-                                    <button type="submit" name="add_fellowship_fw"
-                                        style="width:100%;padding:0.5rem;background:#f5f3ff;color:#7c3aed;border:1px solid #c4b5fd;border-radius:8px;cursor:pointer;font-weight:600;font-size:0.85rem;"><i
-                                            class="fas fa-plus"></i> Add Framework</button>
-                                </form>
-                                <?php if (!empty($fw_map[$intern['id']])): ?>
-                                    <div style="display:flex;flex-direction:column;gap:0.5rem;">
-                                        <?php foreach ($fw_map[$intern['id']] as $fw): ?>
-                                            <div
-                                                style="background:#faf5ff;border:1px solid #e9d5ff;border-radius:8px;padding:0.5rem 0.8rem;display:flex;justify-content:space-between;align-items:center;">
-                                                <div>
-                                                    <span
-                                                        style="font-weight:600;font-size:0.85rem;color:#5b21b6;"><?php echo htmlspecialchars($fw['framework_name']); ?></span>
-                                                    <span
-                                                        style="font-size:0.72rem;background:#ede9fe;color:#6d28d9;padding:0.1rem 0.4rem;border-radius:4px;margin-left:0.4rem;"><?php echo $fw['category']; ?></span>
-                                                </div>
-                                                <a href="?tab=internships&delete_fw=<?php echo $fw['id']; ?>"
-                                                    style="color:#ef4444;font-size:0.8rem;"
-                                                    onclick="return confirm('Remove framework?')"><i class="fas fa-times"></i></a>
+                                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0;">
+
+                                    <!-- SKILLS COLUMN -->
+                                    <div style="padding:1.5rem;border-right:1px solid #e2e8f0;">
+                                        <form method="POST" style="margin-bottom:1rem;">
+                                            <input type="hidden" name="fellowship_internship_id" value="<?php echo $intern['id']; ?>">
+                                            <div class="form-group" style="margin-bottom:0.6rem;">
+                                                <input type="text" name="fs_skill_name" placeholder="Skill name (e.g. Python)" required
+                                                    style="font-size:0.88rem;">
                                             </div>
-                                        <?php endforeach; ?>
-                                    </div>
-                                <?php else: ?>
-                                    <p style="font-size:0.82rem;color:#94a3b8;text-align:center;">No frameworks added yet.</p>
-                                <?php endif; ?>
-                            </div>
-
-                            <!-- PROJECTS COLUMN -->
-                            <div style="padding:1.5rem;">
-                                <form method="POST" style="margin-bottom:1rem;">
-                                    <input type="hidden" name="proj_internship_id" value="<?php echo $intern['id']; ?>">
-                                    <div class="form-group" style="margin-bottom:0.6rem;">
-                                        <input type="text" name="proj_name" placeholder="Project name" required
-                                            style="font-size:0.88rem;">
-                                    </div>
-                                    <div class="form-group" style="margin-bottom:0.6rem;">
-                                        <input type="text" name="proj_description" placeholder="What you built"
-                                            style="font-size:0.88rem;">
-                                    </div>
-                                    <div class="form-group" style="margin-bottom:0.6rem;">
-                                        <input type="text" name="proj_tech_used" placeholder="Tech used (PHP, MySQL...)"
-                                            style="font-size:0.88rem;">
-                                    </div>
-                                    <div class="form-group" style="margin-bottom:0.6rem;">
-                                        <input type="text" name="proj_github" placeholder="GitHub link (optional)"
-                                            style="font-size:0.88rem;">
-                                    </div>
-                                    <button type="submit" name="add_fellowship_proj"
-                                        style="width:100%;padding:0.5rem;background:#eff6ff;color:#0284c7;border:1px solid #bae6fd;border-radius:8px;cursor:pointer;font-weight:600;font-size:0.85rem;"><i
-                                            class="fas fa-plus"></i> Add Project</button>
-                                </form>
-                                <?php if (!empty($fp_map[$intern['id']])): ?>
-                                    <div style="display:flex;flex-direction:column;gap:0.5rem;">
-                                        <?php foreach ($fp_map[$intern['id']] as $fp): ?>
-                                            <div
-                                                style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:0.5rem 0.8rem;display:flex;justify-content:space-between;align-items:center;">
-                                                <div>
-                                                    <span
-                                                        style="font-weight:600;font-size:0.85rem;color:#0369a1;"><?php echo htmlspecialchars($fp['project_name']); ?></span>
-                                                    <?php if ($fp['github_link']): ?>
-                                                        <a href="<?php echo htmlspecialchars($fp['github_link']); ?>" target="_blank"
-                                                            style="font-size:0.72rem;margin-left:0.4rem;color:#0ea5e9;"><i
-                                                                class="fab fa-github"></i></a>
-                                                    <?php endif; ?>
-                                                </div>
-                                                <a href="?tab=internships&delete_fproj=<?php echo $fp['id']; ?>"
-                                                    style="color:#ef4444;font-size:0.8rem;"
-                                                    onclick="return confirm('Remove project?')"><i class="fas fa-times"></i></a>
+                                            <div class="form-group" style="margin-bottom:0.6rem;">
+                                                <select name="fs_proficiency"
+                                                    style="width:100%;padding:0.55rem 0.8rem;border:1px solid #e2e8f0;border-radius:8px;font-size:0.87rem;background:#f8fafc;color:var(--text-color);">
+                                                    <option value="Beginner">Beginner</option>
+                                                    <option value="Intermediate">Intermediate</option>
+                                                    <option value="Advanced">Advanced</option>
+                                                </select>
                                             </div>
-                                        <?php endforeach; ?>
+                                            <div class="form-group" style="margin-bottom:0.6rem;">
+                                                <input type="text" name="fs_description" placeholder="Brief description"
+                                                    style="font-size:0.88rem;">
+                                            </div>
+                                            <button type="submit" name="add_fellowship_skill"
+                                                style="width:100%;padding:0.5rem;background:#ecfdf5;color:#059669;border:1px solid #6ee7b7;border-radius:8px;cursor:pointer;font-weight:600;font-size:0.85rem;"><i
+                                                    class="fas fa-plus"></i> Add Skill</button>
+                                        </form>
+                                        <?php if (!empty($fs_map[$intern['id']])): ?>
+                                                <div style="display:flex;flex-direction:column;gap:0.5rem;">
+                                                    <?php foreach ($fs_map[$intern['id']] as $fs): ?>
+                                                            <div
+                                                                style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:0.5rem 0.8rem;display:flex;justify-content:space-between;align-items:center;">
+                                                                <div>
+                                                                    <span
+                                                                        style="font-weight:600;font-size:0.85rem;color:#065f46;"><?php echo htmlspecialchars($fs['skill_name']); ?></span>
+                                                                    <span
+                                                                        style="font-size:0.72rem;background:#d1fae5;color:#047857;padding:0.1rem 0.4rem;border-radius:4px;margin-left:0.4rem;"><?php echo $fs['proficiency']; ?></span>
+                                                                </div>
+                                                                <a href="?tab=internships&delete_fs=<?php echo $fs['id']; ?>"
+                                                                    style="color:#ef4444;font-size:0.8rem;" onclick="return confirm('Remove skill?')"><i
+                                                                        class="fas fa-times"></i></a>
+                                                            </div>
+                                                    <?php endforeach; ?>
+                                                </div>
+                                        <?php else: ?>
+                                                <p style="font-size:0.82rem;color:#94a3b8;text-align:center;">No skills added yet.</p>
+                                        <?php endif; ?>
                                     </div>
-                                <?php else: ?>
-                                    <p style="font-size:0.82rem;color:#94a3b8;text-align:center;">No projects added yet.</p>
-                                <?php endif; ?>
-                            </div>
-                        </div>
-                    </div>
-                <?php endforeach; ?>
 
-                <?php if (empty($internships)): ?>
-                    <div style="text-align:center;padding:3rem;color:var(--text-light);">
-                        <i class="fas fa-graduation-cap"
-                            style="font-size:2.5rem;margin-bottom:1rem;display:block;opacity:0.3;"></i>
-                        No fellowship entries yet. Add one above!
-                    </div>
-                <?php endif; ?>
-            </div>
+                                    <!-- FRAMEWORKS COLUMN -->
+                                    <div style="padding:1.5rem;border-right:1px solid #e2e8f0;">
+                                        <form method="POST" style="margin-bottom:1rem;">
+                                            <input type="hidden" name="fw_internship_id" value="<?php echo $intern['id']; ?>">
+                                            <div class="form-group" style="margin-bottom:0.6rem;">
+                                                <input type="text" name="fw_name" placeholder="Framework (e.g. Django)" required
+                                                    style="font-size:0.88rem;">
+                                            </div>
+                                            <div class="form-group" style="margin-bottom:0.6rem;">
+                                                <select name="fw_category"
+                                                    style="width:100%;padding:0.55rem 0.8rem;border:1px solid #e2e8f0;border-radius:8px;font-size:0.87rem;background:#f8fafc;color:var(--text-color);">
+                                                    <option value="Frontend">Frontend</option>
+                                                    <option value="Backend">Backend</option>
+                                                    <option value="Mobile">Mobile</option>
+                                                    <option value="DevOps">DevOps</option>
+                                                    <option value="Database">Database</option>
+                                                    <option value="AI/ML">AI/ML</option>
+                                                    <option value="Other">Other</option>
+                                                </select>
+                                            </div>
+                                            <div class="form-group" style="margin-bottom:0.6rem;">
+                                                <input type="text" name="fw_description" placeholder="Brief description"
+                                                    style="font-size:0.88rem;">
+                                            </div>
+                                            <button type="submit" name="add_fellowship_fw"
+                                                style="width:100%;padding:0.5rem;background:#f5f3ff;color:#7c3aed;border:1px solid #c4b5fd;border-radius:8px;cursor:pointer;font-weight:600;font-size:0.85rem;"><i
+                                                    class="fas fa-plus"></i> Add Framework</button>
+                                        </form>
+                                        <?php if (!empty($fw_map[$intern['id']])): ?>
+                                                <div style="display:flex;flex-direction:column;gap:0.5rem;">
+                                                    <?php foreach ($fw_map[$intern['id']] as $fw): ?>
+                                                            <div
+                                                                style="background:#faf5ff;border:1px solid #e9d5ff;border-radius:8px;padding:0.5rem 0.8rem;display:flex;justify-content:space-between;align-items:center;">
+                                                                <div>
+                                                                    <span
+                                                                        style="font-weight:600;font-size:0.85rem;color:#5b21b6;"><?php echo htmlspecialchars($fw['framework_name']); ?></span>
+                                                                    <span
+                                                                        style="font-size:0.72rem;background:#ede9fe;color:#6d28d9;padding:0.1rem 0.4rem;border-radius:4px;margin-left:0.4rem;"><?php echo $fw['category']; ?></span>
+                                                                </div>
+                                                                <a href="?tab=internships&delete_fw=<?php echo $fw['id']; ?>"
+                                                                    style="color:#ef4444;font-size:0.8rem;"
+                                                                    onclick="return confirm('Remove framework?')"><i class="fas fa-times"></i></a>
+                                                            </div>
+                                                    <?php endforeach; ?>
+                                                </div>
+                                        <?php else: ?>
+                                                <p style="font-size:0.82rem;color:#94a3b8;text-align:center;">No frameworks added yet.</p>
+                                        <?php endif; ?>
+                                    </div>
+
+                                    <!-- PROJECTS COLUMN -->
+                                    <div style="padding:1.5rem;">
+                                        <form method="POST" style="margin-bottom:1rem;">
+                                            <input type="hidden" name="proj_internship_id" value="<?php echo $intern['id']; ?>">
+                                            <div class="form-group" style="margin-bottom:0.6rem;">
+                                                <input type="text" name="proj_name" placeholder="Project name" required
+                                                    style="font-size:0.88rem;">
+                                            </div>
+                                            <div class="form-group" style="margin-bottom:0.6rem;">
+                                                <input type="text" name="proj_description" placeholder="What you built"
+                                                    style="font-size:0.88rem;">
+                                            </div>
+                                            <div class="form-group" style="margin-bottom:0.6rem;">
+                                                <input type="text" name="proj_tech_used" placeholder="Tech used (PHP, MySQL...)"
+                                                    style="font-size:0.88rem;">
+                                            </div>
+                                            <div class="form-group" style="margin-bottom:0.6rem;">
+                                                <input type="text" name="proj_github" placeholder="GitHub link (optional)"
+                                                    style="font-size:0.88rem;">
+                                            </div>
+                                            <button type="submit" name="add_fellowship_proj"
+                                                style="width:100%;padding:0.5rem;background:#eff6ff;color:#0284c7;border:1px solid #bae6fd;border-radius:8px;cursor:pointer;font-weight:600;font-size:0.85rem;"><i
+                                                    class="fas fa-plus"></i> Add Project</button>
+                                        </form>
+                                        <?php if (!empty($fp_map[$intern['id']])): ?>
+                                                <div style="display:flex;flex-direction:column;gap:0.5rem;">
+                                                    <?php foreach ($fp_map[$intern['id']] as $fp): ?>
+                                                            <div
+                                                                style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:0.5rem 0.8rem;display:flex;justify-content:space-between;align-items:center;">
+                                                                <div>
+                                                                    <span
+                                                                        style="font-weight:600;font-size:0.85rem;color:#0369a1;"><?php echo htmlspecialchars($fp['project_name']); ?></span>
+                                                                    <?php if ($fp['github_link']): ?>
+                                                                            <a href="<?php echo htmlspecialchars($fp['github_link']); ?>" target="_blank"
+                                                                                style="font-size:0.72rem;margin-left:0.4rem;color:#0ea5e9;"><i
+                                                                                    class="fab fa-github"></i></a>
+                                                                    <?php endif; ?>
+                                                                </div>
+                                                                <a href="?tab=internships&delete_fproj=<?php echo $fp['id']; ?>"
+                                                                    style="color:#ef4444;font-size:0.8rem;"
+                                                                    onclick="return confirm('Remove project?')"><i class="fas fa-times"></i></a>
+                                                            </div>
+                                                    <?php endforeach; ?>
+                                                </div>
+                                        <?php else: ?>
+                                                <p style="font-size:0.82rem;color:#94a3b8;text-align:center;">No projects added yet.</p>
+                                        <?php endif; ?>
+                                    </div>
+                                </div>
+                            </div>
+                    <?php endforeach; ?>
+
+                    <?php if (empty($internships)): ?>
+                            <div style="text-align:center;padding:3rem;color:var(--text-light);">
+                                <i class="fas fa-graduation-cap"
+                                    style="font-size:2.5rem;margin-bottom:1rem;display:block;opacity:0.3;"></i>
+                                No fellowship entries yet. Add one above!
+                            </div>
+                    <?php endif; ?>
+                </div>
         <?php endif; ?>
 
 
         <?php if ($active_tab == 'settings'): ?>
-            <div class="admin-card fade-in">
-                <h2><i class="fas fa-cogs"></i> General Site Settings</h2>
-                <p style="margin-bottom: 2rem; color: var(--text-light);">Update global text and labels across the website.
-                </p>
-                <form method="POST">
-                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem;">
-                        <?php foreach ($site_content as $key => $data): ?>
-                            <div class="form-group">
-                                <label style="text-transform: capitalize;"><?php echo str_replace('_', ' ', $key); ?>
-                                    <small
-                                        style="font-weight: normal; color: var(--text-light);">(<?php echo $data['description']; ?>)</small>
-                                </label>
-                                <input type="text" name="content_<?php echo $key; ?>"
-                                    value="<?php echo htmlspecialchars($data['content_value']); ?>">
-                            </div>
-                        <?php endforeach; ?>
-                    </div>
-                    <div style="margin-top: 2rem;">
-                        <button type="submit" name="update_content" class="btn-primary">Save All Settings</button>
-                    </div>
-                </form>
-            </div>
+                <div class="admin-card fade-in">
+                    <h2><i class="fas fa-cogs"></i> General Site Settings</h2>
+                    <p style="margin-bottom: 2rem; color: var(--text-light);">Update global text and labels across the website.
+                    </p>
+                    <form method="POST">
+                        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem;">
+                            <?php foreach ($site_content as $key => $data): ?>
+                                    <div class="form-group">
+                                        <label style="text-transform: capitalize;"><?php echo str_replace('_', ' ', $key); ?>
+                                            <small
+                                                style="font-weight: normal; color: var(--text-light);">(<?php echo $data['description']; ?>)</small>
+                                        </label>
+                                        <input type="text" name="content_<?php echo $key; ?>"
+                                            value="<?php echo htmlspecialchars($data['content_value']); ?>">
+                                    </div>
+                            <?php endforeach; ?>
+                        </div>
+                        <div style="margin-top: 2rem;">
+                            <button type="submit" name="update_content" class="btn-primary">Save All Settings</button>
+                        </div>
+                    </form>
+                </div>
         <?php endif; ?>
 
         <?php if ($active_tab == 'social'): ?>
-            <div class="admin-card fade-in">
-                <div class="section-header">
-                    <div class="section-icon-badge" style="background:linear-gradient(135deg,#ec4899,#f472b6);"><i
-                            class="fas fa-share-alt"></i></div>
-                    <div>
-                        <h2>Social Links</h2>
-                        <p class="section-subtitle">Manage all your social media links shown in the footer</p>
+                <div class="admin-card fade-in">
+                    <div class="section-header">
+                        <div class="section-icon-badge" style="background:linear-gradient(135deg,#ec4899,#f472b6);"><i
+                                class="fas fa-share-alt"></i></div>
+                        <div>
+                            <h2>Social Links</h2>
+                            <p class="section-subtitle">Manage all your social media links shown in the footer</p>
+                        </div>
                     </div>
-                </div>
-                <form method="POST" enctype="multipart/form-data"
-                    style="display:flex;gap:1rem;align-items:flex-end;flex-wrap:wrap;">
-                    <div class="form-group" style="flex:1;min-width:140px;">
-                        <label>Platform</label>
-                        <input type="text" name="social_platform" placeholder="LinkedIn" required>
-                    </div>
-                    <div class="form-group" style="flex:2;min-width:200px;">
-                        <label>URL</label>
-                        <input type="text" name="social_url" placeholder="https://..." required>
-                    </div>
-                    <div class="form-group" style="flex:1;min-width:130px;">
-                        <label>Icon Class <small style="font-weight:400;color:var(--text-muted)">(fa-...)</small></label>
-                        <input type="text" name="social_icon" placeholder="fa-linkedin">
-                    </div>
-                    <div class="form-group" style="flex:1;min-width:160px;">
-                        <label>Logo Image <small style="font-weight:400;color:var(--text-muted)">(optional)</small></label>
-                        <input type="file" name="social_logo_img" accept="image/*">
-                    </div>
-                    <div class="form-group">
-                        <button type="submit" name="add_social" class="btn-primary"><i class="fas fa-plus"></i> Add
-                            Link</button>
-                    </div>
-                </form>
+                    <form method="POST" enctype="multipart/form-data"
+                        style="display:flex;gap:1rem;align-items:flex-end;flex-wrap:wrap;">
+                        <div class="form-group" style="flex:1;min-width:140px;">
+                            <label>Platform</label>
+                            <input type="text" name="social_platform" placeholder="LinkedIn" required>
+                        </div>
+                        <div class="form-group" style="flex:2;min-width:200px;">
+                            <label>URL</label>
+                            <input type="text" name="social_url" placeholder="https://..." required>
+                        </div>
+                        <div class="form-group" style="flex:1;min-width:130px;">
+                            <label>Icon Class <small style="font-weight:400;color:var(--text-muted)">(fa-...)</small></label>
+                            <input type="text" name="social_icon" placeholder="fa-linkedin">
+                        </div>
+                        <div class="form-group" style="flex:1;min-width:160px;">
+                            <label>Logo Image <small style="font-weight:400;color:var(--text-muted)">(optional)</small></label>
+                            <input type="file" name="social_logo_img" accept="image/*">
+                        </div>
+                        <div class="form-group">
+                            <button type="submit" name="add_social" class="btn-primary"><i class="fas fa-plus"></i> Add
+                                Link</button>
+                        </div>
+                    </form>
 
-                <div class="table-responsive">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Logo</th>
-                                <th>Platform</th>
-                                <th>URL</th>
-                                <th>Action</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php while ($social = $socials->fetch_assoc()): ?>
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
                                 <tr>
-                                    <td>
-                                        <?php if (!empty($social['logo_image'])): ?>
-                                            <img src="../uploads/<?php echo htmlspecialchars($social['logo_image']); ?>"
-                                                class="social-logo-thumb" alt="logo">
-                                        <?php else: ?>
-                                            <div
-                                                style="width:32px;height:32px;background:#f1f5f9;border-radius:8px;display:flex;align-items:center;justify-content:center;">
-                                                <i class="fab fa-<?php echo strtolower(htmlspecialchars($social['platform'])); ?>"
-                                                    style="color:var(--text-muted);"></i>
-                                            </div>
-                                        <?php endif; ?>
-                                    </td>
-                                    <td style="font-weight:600;text-transform:capitalize;">
-                                        <?php echo htmlspecialchars($social['platform']); ?>
-                                    </td>
-                                    <td><a href="<?php echo htmlspecialchars($social['url']); ?>" target="_blank"
-                                            style="color:var(--accent);text-decoration:none;font-size:0.88rem;"><?php echo htmlspecialchars($social['url']); ?></a>
-                                    </td>
-                                    <td>
-                                        <div style="display:flex;gap:0.5rem;">
-                                            <button type="button" class="btn-sm btn-edit"
-                                                onclick="toggleEditRow('sl-<?php echo $social['id']; ?>')"><i
-                                                    class="fas fa-edit"></i></button>
-                                            <a href="?tab=social&delete_social=<?php echo $social['id']; ?>"
-                                                class="btn-sm btn-danger" onclick="return confirm('Delete this link?')"><i
-                                                    class="fas fa-trash"></i></a>
-                                        </div>
-                                    </td>
+                                    <th>Logo</th>
+                                    <th>Platform</th>
+                                    <th>URL</th>
+                                    <th>Action</th>
                                 </tr>
-                                <!-- Inline Edit Row -->
-                                <tr id="sl-<?php echo $social['id']; ?>" style="display:none;">
-                                    <td colspan="4" style="padding:1rem;">
-                                        <form method="POST" enctype="multipart/form-data"
-                                            style="display:flex;gap:0.8rem;flex-wrap:wrap;align-items:flex-end;">
-                                            <input type="hidden" name="edit_social_id" value="<?php echo $social['id']; ?>">
-                                            <div class="form-group" style="flex:1;min-width:120px;margin:0;">
-                                                <label style="font-size:0.78rem;">Platform</label>
-                                                <input type="text" name="edit_social_platform"
-                                                    value="<?php echo htmlspecialchars($social['platform']); ?>"
-                                                    style="font-size:0.85rem;">
-                                            </div>
-                                            <div class="form-group" style="flex:3;min-width:200px;margin:0;">
-                                                <label style="font-size:0.78rem;">URL</label>
-                                                <input type="text" name="edit_social_url"
-                                                    value="<?php echo htmlspecialchars($social['url']); ?>"
-                                                    style="font-size:0.85rem;">
-                                            </div>
-                                            <div class="form-group" style="flex:1;min-width:130px;margin:0;">
-                                                <label style="font-size:0.78rem;">Icon (fa-...)</label>
-                                                <input type="text" name="edit_social_icon"
-                                                    value="<?php echo htmlspecialchars($social['icon'] ?? ''); ?>"
-                                                    placeholder="fa-linkedin" style="font-size:0.85rem;">
-                                            </div>
-                                            <div class="form-group" style="flex:1;min-width:160px;margin:0;">
-                                                <label style="font-size:0.78rem;">New Logo Image</label>
-                                                <input type="file" name="edit_social_logo" accept="image/*"
-                                                    style="font-size:0.85rem;">
-                                            </div>
-                                            <button type="submit" name="update_social" class="btn-primary"
-                                                style="padding:0.6rem 1rem;font-size:0.85rem;"><i class="fas fa-save"></i>
-                                                Save</button>
-                                        </form>
-                                    </td>
-                                </tr>
-                            <?php endwhile; ?>
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                <?php while ($social = $socials->fetch_assoc()): ?>
+                                        <tr>
+                                            <td>
+                                                <?php if (!empty($social['logo_image'])): ?>
+                                                        <img src="../uploads/<?php echo htmlspecialchars($social['logo_image']); ?>"
+                                                            class="social-logo-thumb" alt="logo">
+                                                <?php else: ?>
+                                                        <div
+                                                            style="width:32px;height:32px;background:#f1f5f9;border-radius:8px;display:flex;align-items:center;justify-content:center;">
+                                                            <i class="fab fa-<?php echo strtolower(htmlspecialchars($social['platform'])); ?>"
+                                                                style="color:var(--text-muted);"></i>
+                                                        </div>
+                                                <?php endif; ?>
+                                            </td>
+                                            <td style="font-weight:600;text-transform:capitalize;">
+                                                <?php echo htmlspecialchars($social['platform']); ?>
+                                            </td>
+                                            <td><a href="<?php echo htmlspecialchars($social['url']); ?>" target="_blank"
+                                                    style="color:var(--accent);text-decoration:none;font-size:0.88rem;"><?php echo htmlspecialchars($social['url']); ?></a>
+                                            </td>
+                                            <td>
+                                                <div style="display:flex;gap:0.5rem;">
+                                                    <button type="button" class="btn-sm btn-edit"
+                                                        onclick="toggleEditRow('sl-<?php echo $social['id']; ?>')"><i
+                                                            class="fas fa-edit"></i></button>
+                                                    <a href="?tab=social&delete_social=<?php echo $social['id']; ?>"
+                                                        class="btn-sm btn-danger" onclick="return confirm('Delete this link?')"><i
+                                                            class="fas fa-trash"></i></a>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        <!-- Inline Edit Row -->
+                                        <tr id="sl-<?php echo $social['id']; ?>" style="display:none;">
+                                            <td colspan="4" style="padding:1rem;">
+                                                <form method="POST" enctype="multipart/form-data"
+                                                    style="display:flex;gap:0.8rem;flex-wrap:wrap;align-items:flex-end;">
+                                                    <input type="hidden" name="edit_social_id" value="<?php echo $social['id']; ?>">
+                                                    <div class="form-group" style="flex:1;min-width:120px;margin:0;">
+                                                        <label style="font-size:0.78rem;">Platform</label>
+                                                        <input type="text" name="edit_social_platform"
+                                                            value="<?php echo htmlspecialchars($social['platform']); ?>"
+                                                            style="font-size:0.85rem;">
+                                                    </div>
+                                                    <div class="form-group" style="flex:3;min-width:200px;margin:0;">
+                                                        <label style="font-size:0.78rem;">URL</label>
+                                                        <input type="text" name="edit_social_url"
+                                                            value="<?php echo htmlspecialchars($social['url']); ?>"
+                                                            style="font-size:0.85rem;">
+                                                    </div>
+                                                    <div class="form-group" style="flex:1;min-width:130px;margin:0;">
+                                                        <label style="font-size:0.78rem;">Icon (fa-...)</label>
+                                                        <input type="text" name="edit_social_icon"
+                                                            value="<?php echo htmlspecialchars($social['icon'] ?? ''); ?>"
+                                                            placeholder="fa-linkedin" style="font-size:0.85rem;">
+                                                    </div>
+                                                    <div class="form-group" style="flex:1;min-width:160px;margin:0;">
+                                                        <label style="font-size:0.78rem;">New Logo Image</label>
+                                                        <input type="file" name="edit_social_logo" accept="image/*"
+                                                            style="font-size:0.85rem;">
+                                                    </div>
+                                                    <button type="submit" name="update_social" class="btn-primary"
+                                                        style="padding:0.6rem 1rem;font-size:0.85rem;"><i class="fas fa-save"></i>
+                                                        Save</button>
+                                                </form>
+                                            </td>
+                                        </tr>
+                                <?php endwhile; ?>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
-            </div>
         <?php endif; ?>
 
         <?php if ($active_tab == 'profile'): ?>
-            <div class="admin-card fade-in">
-                <h2><i class="fas fa-id-card"></i> Manage Admin Profile</h2>
-                <div class="alert alert-success" style="background: #eff6ff; color: #1e3a8a; border-color: #dbeafe;">
-                    <i class="fas fa-info-circle"></i> Update your admin credentials here. Passwords are stored in plain
-                    text as requested.
+                <div class="admin-card fade-in">
+                    <h2><i class="fas fa-id-card"></i> Manage Admin Profile</h2>
+                    <div class="alert alert-success" style="background: #eff6ff; color: #1e3a8a; border-color: #dbeafe;">
+                        <i class="fas fa-info-circle"></i> Update your admin credentials here. Passwords are stored in plain
+                        text as requested.
+                    </div>
+                    <form method="POST">
+                        <div class="form-group">
+                            <label>New Username</label>
+                            <input type="text" name="new_username" placeholder="Leave blank to keep current"
+                                value="<?php echo htmlspecialchars($_SESSION['admin_username']); ?>">
+                        </div>
+                        <div class="form-group">
+                            <label>New Password</label>
+                            <input type="text" name="new_password" placeholder="Leave blank to keep current">
+                        </div>
+                        <button type="submit" name="update_admin_profile" class="btn-primary">Update Now</button>
+                    </form>
                 </div>
-                <form method="POST">
-                    <div class="form-group">
-                        <label>New Username</label>
-                        <input type="text" name="new_username" placeholder="Leave blank to keep current"
-                            value="<?php echo htmlspecialchars($_SESSION['admin_username']); ?>">
-                    </div>
-                    <div class="form-group">
-                        <label>New Password</label>
-                        <input type="text" name="new_password" placeholder="Leave blank to keep current">
-                    </div>
-                    <button type="submit" name="update_admin_profile" class="btn-primary">Update Now</button>
-                </form>
-            </div>
         <?php endif; ?>
 
     </div>
