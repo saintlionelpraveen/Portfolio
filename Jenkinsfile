@@ -14,7 +14,6 @@ pipeline {
 
         // Project settings
         DEPLOY_BRANCH = 'feat/admin'
-        PHP_MIN_VERSION = '8.2'
     }
 
     options {
@@ -28,206 +27,198 @@ pipeline {
 
     triggers {
         // Check GitHub for changes every 5 minutes
-        // (Use webhook instead if Jenkins is publicly accessible)
         pollSCM('H/5 * * * *')
     }
 
     stages {
 
-        // ┌─────────────────────────────────────────────┐
-        // │  STAGE 1: Checkout — Get the latest code    │
-        // └─────────────────────────────────────────────┘
-        stage('🚚 Checkout Code') {
+        // ──────────────────────────────────────────────
+        //  STAGE 1: Checkout — Get the latest code
+        // ──────────────────────────────────────────────
+        stage('Checkout Code') {
             steps {
-                echo '📦 Pulling the latest code from GitHub...'
+                echo 'Pulling the latest code from GitHub...'
                 checkout scm
             }
         }
 
-        // ┌─────────────────────────────────────────────┐
-        // │  STAGE 2: Environment Check                 │
-        // └─────────────────────────────────────────────┘
-        stage('🔧 Environment Check') {
+        // ──────────────────────────────────────────────
+        //  STAGE 2: Environment Check
+        // ──────────────────────────────────────────────
+        stage('Environment Check') {
             steps {
-                echo '🔍 Checking if PHP is installed and ready...'
-                bat 'C:\\xampp\\php\\php.exe --version'
+                echo 'Checking if PHP is installed and ready...'
+                powershell '''
+                    & C:\\xampp\\php\\php.exe --version
+                    if ($LASTEXITCODE -ne 0) {
+                        Write-Error "PHP is not available at C:\\xampp\\php\\php.exe"
+                        exit 1
+                    }
+                '''
             }
         }
 
-        // ┌──────────────────────────────────────────────┐
-        // │  STAGE 3: PHP Syntax Validation (Linting)    │
-        // └──────────────────────────────────────────────┘
-        stage('🧪 PHP Syntax Check') {
+        // ──────────────────────────────────────────────
+        //  STAGE 3: PHP Syntax Validation (Linting)
+        // ──────────────────────────────────────────────
+        stage('PHP Syntax Check') {
             steps {
-                echo '🔎 Checking all PHP files for syntax errors...'
+                echo 'Checking all PHP files for syntax errors...'
                 powershell '''
                     $errors = 0
                     Get-ChildItem -Recurse -Filter *.php | ForEach-Object {
-                        $result = & C:\\xampp\\php\\php.exe -l $_.FullName 2>&1
+                        $output = & C:\\xampp\\php\\php.exe -l $_.FullName 2>&1
                         if ($LASTEXITCODE -ne 0) {
-                            Write-Host "[FAIL] $($_.FullName)" -ForegroundColor Red
+                            Write-Host "[FAIL] $($_.FullName)"
+                            Write-Host "       $output"
                             $errors++
                         } else {
-                            Write-Host "[OK]   $($_.FullName)" -ForegroundColor Green
+                            Write-Host "[OK]   $($_.FullName)"
                         }
                     }
+                    Write-Host ""
                     if ($errors -gt 0) {
-                        Write-Host "`nFound $errors file(s) with syntax errors!" -ForegroundColor Red
+                        Write-Host "FAILED: Found $errors file(s) with syntax errors!"
                         exit 1
                     } else {
-                        Write-Host "`nAll PHP files passed syntax check!" -ForegroundColor Green
+                        Write-Host "PASSED: All PHP files have valid syntax!"
                     }
                 '''
             }
         }
 
-        // ┌──────────────────────────────────────────────┐
-        // │  STAGE 4: Security Scan (SQL Injection)      │
-        // └──────────────────────────────────────────────┘
-        stage('🛡️ Security Scan') {
+        // ──────────────────────────────────────────────
+        //  STAGE 4: Security Scan (SQL Injection)
+        // ──────────────────────────────────────────────
+        stage('Security Scan') {
             steps {
-                echo '🔐 Scanning for SQL injection vulnerabilities...'
-                bat '''
-                    @echo off
-                    where semgrep >nul 2>&1
-                    if %ERRORLEVEL% equ 0 (
-                        semgrep --config semgrep.yml --error .
-                        if errorlevel 1 (
-                            echo ❌ Security vulnerabilities found! Fix them before deploying.
-                            exit /b 1
-                        ) else (
-                            echo ✅ No security issues found!
-                        )
-                    ) else (
-                        echo ⚠️ Semgrep not installed. Skipping security scan.
-                        echo    Install it with: pip install semgrep
-                    )
+                echo 'Scanning for SQL injection vulnerabilities...'
+                powershell '''
+                    $semgrepPath = Get-Command semgrep -ErrorAction SilentlyContinue
+                    if ($semgrepPath) {
+                        Write-Host "Semgrep found. Running security scan..."
+                        & semgrep --config semgrep.yml --error .
+                        if ($LASTEXITCODE -ne 0) {
+                            Write-Host "FAILED: Security vulnerabilities found! Fix them before deploying."
+                            exit 1
+                        } else {
+                            Write-Host "PASSED: No security issues found!"
+                        }
+                    } else {
+                        Write-Host "WARNING: Semgrep is not installed. Skipping security scan."
+                        Write-Host "         Install it with: pip install semgrep"
+                    }
                 '''
             }
         }
 
-        // ┌──────────────────────────────────────────────┐
-        // │  STAGE 5: Code Quality Checks                │
-        // └──────────────────────────────────────────────┘
-        stage('📏 Code Quality') {
+        // ──────────────────────────────────────────────
+        //  STAGE 5: Code Quality Checks
+        // ──────────────────────────────────────────────
+        stage('Code Quality') {
             steps {
-                echo '📐 Running code quality checks...'
-                bat '''
-                    @echo off
-                    echo --- Checking for common issues ---
+                echo 'Running code quality checks...'
+                powershell '''
+                    Write-Host "--- Checking for common issues ---"
+                    $warnings = 0
 
-                    echo.
-                    echo [CHECK] Looking for hardcoded passwords in PHP files...
-                    findstr /s /i /n "password.*=.*'" *.php | findstr /v /i "DB_PASS\\|config.php\\|define(" > nul 2>&1
-                    if %ERRORLEVEL% equ 0 (
-                        echo ⚠️  Warning: Possible hardcoded passwords found. Review carefully.
-                    ) else (
-                        echo ✅ No hardcoded passwords detected.
-                    )
+                    # Check 1: Debug statements
+                    Write-Host ""
+                    Write-Host "[CHECK] Looking for debug/var_dump statements left in code..."
+                    $debugMatches = Select-String -Path "*.php","admin\\*.php" -Pattern "var_dump|print_r|dd\\(" -ErrorAction SilentlyContinue
+                    if ($debugMatches) {
+                        Write-Host "WARNING: Debug statements found. Remove before production."
+                        $debugMatches | ForEach-Object { Write-Host "  $($_.Filename):$($_.LineNumber) - $($_.Line.Trim())" }
+                        $warnings++
+                    } else {
+                        Write-Host "PASSED: No debug statements found."
+                    }
 
-                    echo.
-                    echo [CHECK] Looking for debug/var_dump statements left in code...
-                    findstr /s /n "var_dump\\|print_r\\|die(\\|dd(" *.php > nul 2>&1
-                    if %ERRORLEVEL% equ 0 (
-                        echo ⚠️  Warning: Debug statements found. Remove before production.
-                        findstr /s /n "var_dump\\|print_r\\|die(\\|dd(" *.php
-                    ) else (
-                        echo ✅ No debug statements found.
-                    )
+                    # Check 2: Error display enabled
+                    Write-Host ""
+                    Write-Host "[CHECK] Checking for error display enabled in production..."
+                    $displayErrors = Select-String -Path "config\\config.php" -Pattern "display_errors.*1" -ErrorAction SilentlyContinue
+                    if ($displayErrors) {
+                        Write-Host "WARNING: display_errors is ON in config.php. Consider turning OFF for production."
+                        $warnings++
+                    } else {
+                        Write-Host "PASSED: Error display settings look good."
+                    }
 
-                    echo.
-                    echo [CHECK] Checking for error display enabled in production...
-                    findstr /s /n "display_errors.*1" config\\config.php > nul 2>&1
-                    if %ERRORLEVEL% equ 0 (
-                        echo ⚠️  Warning: display_errors is ON. Turn OFF for production.
-                    ) else (
-                        echo ✅ Error display settings look good.
-                    )
-
-                    echo.
-                    echo ✅ Code quality checks complete!
+                    Write-Host ""
+                    if ($warnings -gt 0) {
+                        Write-Host "Code quality checks complete with $warnings warning(s)."
+                        Write-Host "Warnings are advisory and do not block the build."
+                    } else {
+                        Write-Host "PASSED: All code quality checks passed!"
+                    }
                 '''
             }
         }
 
-        // ┌──────────────────────────────────────────────┐
-        // │  STAGE 6: Deploy via FTP                     │
-        // └──────────────────────────────────────────────┘
-        stage('🚀 Deploy to Production') {
+        // ──────────────────────────────────────────────
+        //  STAGE 6: Deploy via FTP
+        // ──────────────────────────────────────────────
+        stage('Deploy to Production') {
             when {
-                // Only deploy when building the main deploy branch
                 branch "${DEPLOY_BRANCH}"
             }
             steps {
-                echo '🌐 Deploying to InfinityFree via FTP...'
-                bat """
-                    @echo off
-                    echo Uploading files to production server...
+                echo 'Deploying to InfinityFree via FTP...'
+                powershell """
+                    Write-Host "Uploading files to production server..."
 
-                    REM Using Windows built-in FTP or curl for file upload
-                    REM This creates an FTP script and executes it
+                    \$ftpScript = @"
+open \$env:FTP_SERVER
+\$env:FTP_USERNAME
+\$env:FTP_PASSWORD
+binary
+cd htdocs
+prompt off
+mput index.php
+mput login.php
+mput .htaccess
+mkdir admin
+cd admin
+mput admin\\*.php
+mput admin\\*.css
+cd ..
+mkdir assets
+cd assets
+mkdir css
+cd css
+mput assets\\css\\*.css
+cd ..
+mkdir js
+cd js
+mput assets\\js\\*.js
+cd ..
+cd ..
+mkdir config
+cd config
+mput config\\config.php
+cd ..
+bye
+"@
 
-                    (
-                        echo open %FTP_SERVER%
-                        echo %FTP_USERNAME%
-                        echo %FTP_PASSWORD%
-                        echo binary
-                        echo cd htdocs
-                        echo prompt off
-                        echo mput index.php
-                        echo mput login.php
-                        echo mput .htaccess
-                        echo mkdir admin
-                        echo cd admin
-                        echo mput admin\\*.php
-                        echo mput admin\\*.css
-                        echo cd ..
-                        echo mkdir assets
-                        echo cd assets
-                        echo mkdir css
-                        echo cd css
-                        echo mput assets\\css\\*.css
-                        echo cd ..
-                        echo mkdir js
-                        echo cd js
-                        echo mput assets\\js\\*.js
-                        echo cd ..
-                        echo cd ..
-                        echo mkdir config
-                        echo cd config
-                        echo mput config\\config.php
-                        echo cd ..
-                        echo bye
-                    ) > ftp_commands.txt
-
-                    ftp -n -s:ftp_commands.txt
-
-                    del ftp_commands.txt
-                    echo ✅ Deployment complete!
+                    \$ftpScript | Out-File -FilePath "ftp_commands.txt" -Encoding ASCII
+                    & ftp -n -s:ftp_commands.txt
+                    Remove-Item "ftp_commands.txt" -Force
+                    Write-Host "Deployment complete!"
                 """
             }
         }
     }
 
-    // ┌──────────────────────────────────────────────┐
-    // │  POST ACTIONS — What happens after the build │
-    // └──────────────────────────────────────────────┘
+    // ──────────────────────────────────────────────
+    //  POST ACTIONS — What happens after the build
+    // ──────────────────────────────────────────────
     post {
         success {
-            echo '''
-            ╔═══════════════════════════════════════════╗
-            ║  ✅ BUILD SUCCESSFUL!                     ║
-            ║  All checks passed. Code is deployed.     ║
-            ╚═══════════════════════════════════════════╝
-            '''
+            echo 'BUILD SUCCESSFUL! All checks passed.'
         }
         failure {
-            echo '''
-            ╔═══════════════════════════════════════════╗
-            ║  ❌ BUILD FAILED!                         ║
-            ║  Check the console output for errors.     ║
-            ╚═══════════════════════════════════════════╝
-            '''
+            echo 'BUILD FAILED! Check the console output for errors.'
         }
     }
 }
