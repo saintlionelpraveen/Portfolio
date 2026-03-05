@@ -60,27 +60,23 @@ pipeline {
         stage('🧪 PHP Syntax Check') {
             steps {
                 echo '🔎 Checking all PHP files for syntax errors...'
-                bat '''
-                    @echo off
-                    setlocal enabledelayedexpansion
-                    set "ERRORS=0"
-                    for /r %%f in (*.php) do (
-                        C:\\xampp\\php\\php.exe -l "%%f" > nul 2>&1
-                        if errorlevel 1 (
-                            echo [FAIL] %%f
-                            set /a ERRORS+=1
-                        ) else (
-                            echo [OK]   %%f
-                        )
-                    )
-                    if !ERRORS! gtr 0 (
-                        echo.
-                        echo ❌ Found !ERRORS! file(s) with syntax errors!
-                        exit /b 1
-                    ) else (
-                        echo.
-                        echo ✅ All PHP files passed syntax check!
-                    )
+                powershell '''
+                    $errors = 0
+                    Get-ChildItem -Recurse -Filter *.php | ForEach-Object {
+                        $result = & C:\\xampp\\php\\php.exe -l $_.FullName 2>&1
+                        if ($LASTEXITCODE -ne 0) {
+                            Write-Host "[FAIL] $($_.FullName)" -ForegroundColor Red
+                            $errors++
+                        } else {
+                            Write-Host "[OK]   $($_.FullName)" -ForegroundColor Green
+                        }
+                    }
+                    if ($errors -gt 0) {
+                        Write-Host "`nFound $errors file(s) with syntax errors!" -ForegroundColor Red
+                        exit 1
+                    } else {
+                        Write-Host "`nAll PHP files passed syntax check!" -ForegroundColor Green
+                    }
                 '''
             }
         }
