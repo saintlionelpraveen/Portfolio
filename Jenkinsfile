@@ -157,7 +157,7 @@ pipeline {
         }
 
         // ──────────────────────────────────────────────
-        //  STAGE 6: Deploy via FTP
+        //  STAGE 6: Deploy via FTP (PowerShell .NET)
         // ──────────────────────────────────────────────
         stage('Deploy to Production') {
             when {
@@ -166,49 +166,104 @@ pipeline {
             steps {
                 echo 'Deploying to InfinityFree via FTP...'
                 powershell '''
-                    Write-Host "Uploading files to production server..."
+                    $ErrorActionPreference = "Stop"
 
                     $server   = $env:FTP_SERVER
                     $username = $env:FTP_USERNAME
                     $password = $env:FTP_PASSWORD
 
-                    $ftpScript = @"
-open $server
-$username
-$password
-binary
-cd htdocs
-prompt off
-mput index.php
-mput login.php
-mput .htaccess
-mkdir admin
-cd admin
-mput admin\\*.php
-mput admin\\*.css
-cd ..
-mkdir assets
-cd assets
-mkdir css
-cd css
-mput assets\\css\\*.css
-cd ..
-mkdir js
-cd js
-mput assets\\js\\*.js
-cd ..
-cd ..
-mkdir config
-cd config
-mput config\\config.php
-cd ..
-bye
-"@
+                    if (-not $server -or -not $username -or -not $password) {
+                        Write-Error "FTP credentials are missing! Check Jenkins Credentials Manager."
+                        exit 1
+                    }
 
-                    $ftpScript | Out-File -FilePath "ftp_commands.txt" -Encoding ASCII
-                    & ftp -n -s:ftp_commands.txt
-                    Remove-Item "ftp_commands.txt" -Force
-                    Write-Host "Deployment complete!"
+                    $ftpBase = "ftp://${server}/htdocs"
+                    $cred    = New-Object System.Net.NetworkCredential($username, $password)
+
+                    # ── Helper: Upload a single file via FTP ──
+                    function Upload-FtpFile($localPath, $remotePath) {
+                        $uri = "${ftpBase}/${remotePath}"
+                        try {
+                            $client = New-Object System.Net.WebClient
+                            $client.Credentials = $cred
+                            $fileBytes = [System.IO.File]::ReadAllBytes($localPath)
+                            $client.UploadData($uri, $fileBytes) | Out-Null
+                            Write-Host "[OK]   $remotePath"
+                        } catch {
+                            Write-Host "[FAIL] $remotePath - $($_.Exception.Message)"
+                            throw
+                        } finally {
+                            if ($client) { $client.Dispose() }
+                        }
+                    }
+
+                    # ── Helper: Create a remote FTP directory ──
+                    function Ensure-FtpDir($dirPath) {
+                        $uri = "${ftpBase}/${dirPath}/"
+                        try {
+                            $request = [System.Net.FtpWebRequest]::Create($uri)
+                            $request.Method = [System.Net.WebRequestMethods+Ftp]::MakeDirectory
+                            $request.Credentials = $cred
+                            $request.GetResponse() | Out-Null
+                            Write-Host "[DIR]  Created $dirPath"
+                        } catch {
+                            # Directory likely already exists
+                            Write-Host "[DIR]  $dirPath (already exists)"
+                        }
+                    }
+
+                    Write-Host ""
+                    Write-Host "========================================="
+                    Write-Host "  Deploying to $server"
+                    Write-Host "========================================="
+                    Write-Host ""
+
+                    # ── Create remote directories ──
+                    Write-Host "--- Creating directories ---"
+                    Ensure-FtpDir "admin"
+                    Ensure-FtpDir "assets"
+                    Ensure-FtpDir "assets/css"
+                    Ensure-FtpDir "assets/js"
+                    Ensure-FtpDir "config"
+                    Write-Host ""
+
+                    # ── Upload root files ──
+                    Write-Host "--- Uploading root files ---"
+                    Upload-FtpFile "index.php"    "index.php"
+                    Upload-FtpFile "login.php"    "login.php"
+                    if (Test-Path ".htaccess") {
+                        Upload-FtpFile ".htaccess" ".htaccess"
+                    }
+                    Write-Host ""
+
+                    # ── Upload admin files ──
+                    Write-Host "--- Uploading admin files ---"
+                    Get-ChildItem -Path "admin" -Filter "*.php" | ForEach-Object {
+                        Upload-FtpFile $_.FullName "admin/$($_.Name)"
+                    }
+                    Get-ChildItem -Path "admin" -Filter "*.css" | ForEach-Object {
+                        Upload-FtpFile $_.FullName "admin/$($_.Name)"
+                    }
+                    Write-Host ""
+
+                    # ── Upload assets ──
+                    Write-Host "--- Uploading assets ---"
+                    Get-ChildItem -Path "assets/css" -Filter "*.css" -ErrorAction SilentlyContinue | ForEach-Object {
+                        Upload-FtpFile $_.FullName "assets/css/$($_.Name)"
+                    }
+                    Get-ChildItem -Path "assets/js" -Filter "*.js" -ErrorAction SilentlyContinue | ForEach-Object {
+                        Upload-FtpFile $_.FullName "assets/js/$($_.Name)"
+                    }
+                    Write-Host ""
+
+                    # ── Upload config ──
+                    Write-Host "--- Uploading config ---"
+                    Upload-FtpFile "config/config.php" "config/config.php"
+                    Write-Host ""
+
+                    Write-Host "========================================="
+                    Write-Host "  Deployment COMPLETE!"
+                    Write-Host "========================================="
                 '''
             }
         }
