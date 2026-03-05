@@ -22,8 +22,6 @@ pipeline {
         buildDiscarder(logRotator(numToKeepStr: '10'))
         // Cancel the build if it takes too long (15 minutes max)
         timeout(time: 15, unit: 'MINUTES')
-        // Show timestamps in console output
-        timestamps()
         // Don't allow the same pipeline to run twice at the same time
         disableConcurrentBuilds()
     }
