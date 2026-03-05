@@ -176,6 +176,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['send_message'])) {
 
             <li><a href="#home">Home</a></li>
             <li><a href="#about">About</a></li>
+            <li><a href="#admin">Admin</a></li>
             <li><a href="#fellowship">Fellowship</a></li>
             <li><a href="#projects">Works</a></li>
             <li><a href="#contact" class="nav-btn">Contact <i class="fas fa-arrow-right"></i></a></li>
