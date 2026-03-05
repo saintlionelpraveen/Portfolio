@@ -136,14 +136,14 @@ pipeline {
                     findstr /s /n "var_dump\\|print_r\\|die(\\|dd(" *.php > nul 2>&1
                     if %ERRORLEVEL% equ 0 (
                         echo ⚠️  Warning: Debug statements found. Remove before production.
-                        findstr /s /n "var_dump\|print_r\|die(\|dd(" *.php
+                        findstr /s /n "var_dump\\|print_r\\|die(\\|dd(" *.php
                     ) else (
                         echo ✅ No debug statements found.
                     )
 
                     echo.
                     echo [CHECK] Checking for error display enabled in production...
-                    findstr /s /n "display_errors.*1" config\config.php > nul 2>&1
+                    findstr /s /n "display_errors.*1" config\\config.php > nul 2>&1
                     if %ERRORLEVEL% equ 0 (
                         echo ⚠️  Warning: display_errors is ON. Turn OFF for production.
                     ) else (
