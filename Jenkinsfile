@@ -50,7 +50,7 @@ pipeline {
         stage('🔧 Environment Check') {
             steps {
                 echo '🔍 Checking if PHP is installed and ready...'
-                bat 'php --version'
+                bat 'C:\\xampp\\php\\php.exe --version'
             }
         }
 
@@ -65,7 +65,7 @@ pipeline {
                     setlocal enabledelayedexpansion
                     set "ERRORS=0"
                     for /r %%f in (*.php) do (
-                        php -l "%%f" > nul 2>&1
+                        C:\\xampp\\php\\php.exe -l "%%f" > nul 2>&1
                         if errorlevel 1 (
                             echo [FAIL] %%f
                             set /a ERRORS+=1
@@ -232,10 +232,6 @@ pipeline {
             ║  Check the console output for errors.     ║
             ╚═══════════════════════════════════════════╝
             '''
-        }
-        always {
-            // Clean up workspace after build
-            cleanWs()
         }
     }
 }
