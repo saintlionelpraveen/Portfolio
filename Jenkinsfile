@@ -125,7 +125,7 @@ pipeline {
                     # Check 1: Debug statements
                     Write-Host ""
                     Write-Host "[CHECK] Looking for debug/var_dump statements left in code..."
-                    $debugMatches = Select-String -Path "*.php","admin\\*.php" -Pattern "var_dump|print_r|dd\(" -ErrorAction SilentlyContinue
+                    $debugMatches = Select-String -Path "*.php","admin\\*.php" -Pattern "var_dump|print_r|dd[(]" -ErrorAction SilentlyContinue
                     if ($debugMatches) {
                         Write-Host "WARNING: Debug statements found. Remove before production."
                         $debugMatches | ForEach-Object { Write-Host "  $($_.Filename):$($_.LineNumber) - $($_.Line.Trim())" }
@@ -184,23 +184,23 @@ mput login.php
 mput .htaccess
 mkdir admin
 cd admin
-mput admin\*.php
-mput admin\*.css
+mput admin\\*.php
+mput admin\\*.css
 cd ..
 mkdir assets
 cd assets
 mkdir css
 cd css
-mput assets\css\*.css
+mput assets\\css\\*.css
 cd ..
 mkdir js
 cd js
-mput assets\js\*.js
+mput assets\\js\\*.js
 cd ..
 cd ..
 mkdir config
 cd config
-mput config\config.php
+mput config\\config.php
 cd ..
 bye
 "@
