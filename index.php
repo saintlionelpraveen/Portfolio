@@ -211,7 +211,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['send_message'])) {
                 <i class="fas fa-palette"></i> <?php echo get_site_content('Tech Addict'); ?>
             </div>
             <div class="floating-badge badge-2">
-                <i class="fas fa-code"></i> <?php echo get_site_content('Software Engineer'); ?>
+                <i class="fas fa-code"></i> <?php echo get_site_content('Full Stack Software Engineer'); ?>
             </div>
             <div class="floating-badge badge-3">
                 <i class="fas fa-layer-group"></i> <?php echo get_site_content('Full Stack Developer'); ?>

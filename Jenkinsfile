@@ -17,8 +17,8 @@ pipeline {
     }
 
     options {
-        // Keep only last 10 builds to save disk space
-        buildDiscarder(logRotator(numToKeepStr: '10'))
+        // Keep only last 5 builds to save disk space
+        buildDiscarder(logRotator(numToKeepStr: '5'))
         // Cancel the build if it takes too long (15 minutes max)
         timeout(time: 15, unit: 'MINUTES')
         // Don't allow the same pipeline to run twice at the same time
