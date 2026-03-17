@@ -1,46 +1,42 @@
 <?php
 // admin/auth.php
+session_start();
 require_once '../config/config.php';
-require_once '../includes/functions.php';
 
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $username = clean_input($_POST['username']);
-    $password = $_POST['password'];
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $username = trim($_POST['username'] ?? '');
+    $password = trim($_POST['password'] ?? '');
 
-    $sql = "SELECT id, username, password FROM admin_users WHERE username = ?";
-    $stmt = $conn->prepare($sql);
-
-    if ($stmt) {
-        $stmt->bind_param("s", $username);
-        $stmt->execute();
-        $stmt->store_result();
-
-        if ($stmt->num_rows == 1) {
-            $stmt->bind_result($id, $db_username, $db_password);
-            $stmt->fetch();
-
-            if ($password === $db_password) {
-                // Password is correct
-                $_SESSION['admin_id'] = $id;
-                $_SESSION['admin_username'] = $db_username;
-                header("Location: dashboard.php");
-                exit();
-            } else {
-                header("Location: ../login.php?error=Invalid password");
-                exit();
-            }
-        } else {
-            header("Location: ../login.php?error=Invalid username");
-            exit();
-        }
-        $stmt->close();
-    } else {
-        header("Location: ../login.php?error=Database error");
+    if (empty($username) || empty($password)) {
+        header("Location: ../login.php?error=Please enter both username and password");
         exit();
     }
+
+    // Query admin_users table
+    $stmt = $conn->prepare("SELECT id, username, password FROM admin_users WHERE username = ? LIMIT 1");
+    $stmt->bind_param("s", $username);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    if ($result->num_rows === 1) {
+        $admin = $result->fetch_assoc();
+
+        // Password is stored as plain text in the database
+        if ($password === $admin['password']) {
+            // Login successful
+            $_SESSION['admin_id'] = $admin['id'];
+            $_SESSION['admin_username'] = $admin['username'];
+            header("Location: dashboard.php");
+            exit();
+        }
+    }
+
+    // Login failed
+    header("Location: ../login.php?error=Invalid username or password");
+    exit();
 } else {
+    // If accessed directly without POST, redirect to login
     header("Location: ../login.php");
     exit();
 }
-$conn->close();
 ?>
