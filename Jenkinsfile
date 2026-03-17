@@ -42,6 +42,7 @@ pipeline {
                         set "fullpath=%%F"
                         setlocal enabledelayedexpansion
                         set "relpath=!fullpath:%WORKSPACE%\\=!"
+                        set "relpath=!relpath:\\=/!"
                         echo Uploading: !relpath!
                         curl -s -T "%%F" "ftp://%FTP_SERVER%/htdocs/!relpath!" --user "%FTP_USERNAME%:%FTP_PASSWORD%" --ftp-create-dirs
                         endlocal
@@ -52,6 +53,7 @@ pipeline {
                         set "fullpath=%%F"
                         setlocal enabledelayedexpansion
                         set "relpath=!fullpath:%WORKSPACE%\\=!"
+                        set "relpath=!relpath:\\=/!"
                         echo Uploading: !relpath!
                         curl -s -T "%%F" "ftp://%FTP_SERVER%/htdocs/!relpath!" --user "%FTP_USERNAME%:%FTP_PASSWORD%" --ftp-create-dirs
                         endlocal
@@ -62,6 +64,7 @@ pipeline {
                         set "fullpath=%%F"
                         setlocal enabledelayedexpansion
                         set "relpath=!fullpath:%WORKSPACE%\\=!"
+                        set "relpath=!relpath:\\=/!"
                         echo Uploading: !relpath!
                         curl -s -T "%%F" "ftp://%FTP_SERVER%/htdocs/!relpath!" --user "%FTP_USERNAME%:%FTP_PASSWORD%" --ftp-create-dirs
                         endlocal
@@ -72,6 +75,7 @@ pipeline {
                         set "fullpath=%%F"
                         setlocal enabledelayedexpansion
                         set "relpath=!fullpath:%WORKSPACE%\\=!"
+                        set "relpath=!relpath:\\=/!"
                         echo Uploading: !relpath!
                         curl -s -T "%%F" "ftp://%FTP_SERVER%/htdocs/!relpath!" --user "%FTP_USERNAME%:%FTP_PASSWORD%" --ftp-create-dirs
                         endlocal

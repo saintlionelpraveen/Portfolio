@@ -20,9 +20,9 @@ if ($_SERVER['HTTP_HOST'] == 'localhost' || $_SERVER['HTTP_HOST'] == '127.0.0.1'
     define('DB_PASS', 'praveen1328');
     define('DB_NAME', 'if0_41198642_praveen');
 
-    // Hide errors in production
-    error_reporting(0);
-    ini_set('display_errors', 0);
+    // Temporarily show errors in production to debug the 500 error
+    error_reporting(E_ALL);
+    ini_set('display_errors', 1);
 }
 
 // Create connection
