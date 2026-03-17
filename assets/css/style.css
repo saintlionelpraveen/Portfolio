@@ -355,78 +355,761 @@ h2 {
     box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
 }
 
-/* Skills */
+/* Skills — Colorful Sticky-Note Cards */
+.skills-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.8rem;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
 .skill-card {
-    background: #fff;
-    border: 1px solid var(--glass-border);
-    box-shadow: var(--glass-shadow);
-    color: var(--text-color);
     border-radius: 16px;
-    transition: 0.3s;
+    padding: 2rem 2rem 1.8rem;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow: hidden;
+    min-height: 180px;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Folded corner */
+.skill-card::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 32px;
+    height: 32px;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.6) 50%, rgba(0, 0, 0, 0.06) 50%);
+    border-bottom-left-radius: 8px;
 }
 
 .skill-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+    transform: translateY(-8px) rotate(-1deg);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
+}
+
+/* Colour driven by PHP inline --card-bg variable */
+.skill-card {
+    background: var(--card-bg, #a7f3d0);
+}
+
+/* Fade-in controlled by JS (section observer triggers all at once) */
+.skill-card {
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity 0.45s ease, transform 0.45s ease, box-shadow 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.skill-card.visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.skill-card .skill-label {
+    font-size: 0.8rem;
+    color: rgba(0, 0, 0, 0.45);
+    margin-bottom: 0.4rem;
+    font-weight: 500;
 }
 
 .skill-card h3 {
-    color: var(--text-color);
-    font-weight: 600;
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #111;
+    margin: 0 0 0.5rem 0;
+    line-height: 1.3;
 }
 
-.progress-bar {
-    background: #f1f5f9;
+.skill-card .skill-percentage {
+    margin-top: auto;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: rgba(0, 0, 0, 0.4);
+}
+
+.skill-card .skill-desc {
+    font-size: 0.85rem;
+    color: rgba(0, 0, 0, 0.55);
+    line-height: 1.5;
+    margin-bottom: 0.8rem;
+}
+
+.skill-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-bottom: 0.9rem;
+}
+
+.skill-tag {
+    display: inline-block;
+    padding: 0.25rem 0.6rem;
+    background: rgba(255, 255, 255, 0.55);
+    color: rgba(0, 0, 0, 0.65);
+    border-radius: 5px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    backdrop-filter: blur(4px);
+}
+
+/* Progress bar */
+.skill-progress-wrap {
+    height: 6px;
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 99px;
+    overflow: hidden;
+    margin: 0.6rem 0 0.5rem;
+}
+
+.skill-progress-bar {
+    height: 100%;
+    border-radius: 99px;
+    transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    background: var(--bar-color, #059669);
+}
+
+@media (max-width: 1100px) {
+    .skills-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 680px) {
+    .skills-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+
+/* Experience / Internship Cards */
+.experience-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.8rem;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.experience-card {
+    border-radius: 16px;
+    padding: 2rem 2rem 1.8rem;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    min-height: 220px;
+}
+
+/* Folded corner effect */
+.experience-card::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 32px;
+    height: 32px;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.6) 50%, rgba(0, 0, 0, 0.06) 50%);
+    border-bottom-left-radius: 8px;
+}
+
+.experience-card:hover {
+    transform: translateY(-8px) rotate(-1deg);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
+}
+
+/* Cycling pastel colors */
+.experience-card:nth-child(6n+1) {
+    background: #a7f3d0;
+}
+
+.experience-card:nth-child(6n+2) {
+    background: #bae6fd;
+}
+
+.experience-card:nth-child(6n+3) {
+    background: #fde68a;
+}
+
+.experience-card:nth-child(6n+4) {
+    background: #fbcfe8;
+}
+
+.experience-card:nth-child(6n+5) {
+    background: #c4b5fd;
+}
+
+.experience-card:nth-child(6n+6) {
+    background: #d9f99d;
+}
+
+.experience-card .exp-company {
+    font-size: 0.8rem;
+    color: rgba(0, 0, 0, 0.5);
+    margin-bottom: 0.6rem;
+    font-weight: 500;
+}
+
+.experience-card .exp-company em {
+    font-style: italic;
+    text-decoration: underline;
+    text-decoration-color: rgba(0, 0, 0, 0.25);
+}
+
+.experience-card h3 {
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: #111;
+    margin: 0 0 0.5rem 0;
+    line-height: 1.3;
+}
+
+.experience-card .exp-description {
+    font-size: 0.88rem;
+    color: rgba(0, 0, 0, 0.6);
+    line-height: 1.55;
+    margin-bottom: 1rem;
+    flex-grow: 1;
+}
+
+.experience-card .exp-meta {
+    margin-top: auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.experience-card .exp-duration {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: rgba(0, 0, 0, 0.45);
+}
+
+@media (max-width: 1100px) {
+    .experience-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 680px) {
+    .experience-grid {
+        grid-template-columns: 1fr;
+    }
 }
 
 /* Projects */
+.projects-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.8rem;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
 .project-card {
-    background: #fff;
+    background: var(--card-bg);
     border: 1px solid var(--glass-border);
-    box-shadow: var(--glass-shadow);
-    color: var(--text-color);
-    border-radius: 16px;
-    padding: 0;
+    border-radius: 20px;
+    padding: 2rem 2rem 1.8rem;
+    display: flex;
+    flex-direction: column;
+    transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+}
+
+.project-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 16px 32px rgba(0, 0, 0, 0.08);
+    border-color: var(--accent-color);
+}
+
+.project-icon-wrapper {
+    width: 56px;
+    height: 56px;
+    background: #fff;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1.2rem;
     overflow: hidden;
+    border: 1px solid var(--glass-border);
 }
 
-.project-img {
-    border-radius: 0;
-    height: 250px;
+.project-icon-wrapper img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
 }
 
-.project-card>h3,
-.project-card>p,
-.project-card>div {
-    padding: 0 1.5rem;
+.project-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 0.6rem;
 }
 
-.project-card div:last-child {
-    padding-bottom: 1.5rem;
+.project-card h3 {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--text-color);
+    margin: 0;
+}
+
+.project-year {
+    font-size: 0.8rem;
+    color: var(--text-light);
+    font-weight: 500;
+    white-space: nowrap;
+    margin-left: 0.5rem;
 }
 
 .project-card p {
-    color: var(--text-light) !important;
-    line-height: 1.6;
+    color: var(--text-light);
+    font-size: 0.9rem;
+    line-height: 1.65;
+    margin-bottom: 1.5rem;
+    flex-grow: 1;
 }
 
-.btn {
-    border-color: var(--text-color);
+.project-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: auto;
+}
+
+/* Vibrant colored tag pills — cycles through 6 colors */
+.project-tag {
+    padding: 0.35rem 0.75rem;
+    border-radius: 6px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.2px;
+    transition: 0.3s;
+}
+
+.project-tag:nth-child(6n+1) {
+    background: rgba(16, 185, 129, 0.12);
+    color: #059669;
+}
+
+.project-tag:nth-child(6n+2) {
+    background: rgba(59, 130, 246, 0.12);
+    color: #2563eb;
+}
+
+.project-tag:nth-child(6n+3) {
+    background: rgba(244, 63, 94, 0.12);
+    color: #e11d48;
+}
+
+.project-tag:nth-child(6n+4) {
+    background: rgba(245, 158, 11, 0.12);
+    color: #d97706;
+}
+
+.project-tag:nth-child(6n+5) {
+    background: rgba(139, 92, 246, 0.12);
+    color: #7c3aed;
+}
+
+.project-tag:nth-child(6n+6) {
+    background: rgba(14, 165, 233, 0.12);
+    color: #0284c7;
+}
+
+.project-card:hover .project-tag {
+    filter: brightness(0.95);
+}
+
+.project-links {
+    display: flex;
+    gap: 1.5rem;
+    border-top: 1px solid var(--glass-border);
+    padding-top: 1.2rem;
+    margin-top: 1.5rem;
+}
+
+.project-link {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    text-decoration: none;
+    font-size: 0.85rem;
+    font-weight: 600;
     color: var(--text-color);
+    transition: 0.3s;
 }
 
-.btn:hover {
-    background: var(--text-color);
+.project-link:hover {
+    color: var(--accent-dark);
+}
+
+.project-link i {
+    font-size: 0.95rem;
+}
+
+@media (max-width: 1100px) {
+    .projects-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 680px) {
+    .projects-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ==========================================
+   CONTACT SECTION — Premium 2-Column Layout
+   ========================================== */
+
+.contact-subtitle {
+    text-align: center;
+    color: var(--text-light);
+    font-size: 1.1rem;
+    margin-top: -2.5rem;
+    margin-bottom: 3rem;
+}
+
+.contact-wrapper {
+    display: grid;
+    grid-template-columns: 1fr 1.5fr;
+    gap: 2.5rem;
+    max-width: 1100px;
+    margin: 0 auto;
+    align-items: stretch;
+}
+
+/* ------- LEFT: Info Panel ------- */
+.contact-info-panel {
+    background: linear-gradient(145deg, #0f172a 0%, #1e293b 100%);
+    border-radius: 24px;
+    padding: 2.8rem 2.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.contact-info-panel::before {
+    content: '';
+    position: absolute;
+    top: -60px;
+    right: -60px;
+    width: 200px;
+    height: 200px;
+    background: radial-gradient(circle, rgba(14, 165, 233, 0.2) 0%, transparent 70%);
+    border-radius: 50%;
+}
+
+.contact-availability {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(16, 185, 129, 0.15);
+    color: #34d399;
+    padding: 0.4rem 1rem;
+    border-radius: 99px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    width: fit-content;
+    letter-spacing: 0.3px;
+}
+
+.availability-dot {
+    width: 8px;
+    height: 8px;
+    background: #10b981;
+    border-radius: 50%;
+    display: inline-block;
+    animation: pulse-dot 2s infinite;
+}
+
+@keyframes pulse-dot {
+
+    0%,
+    100% {
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4);
+    }
+
+    50% {
+        box-shadow: 0 0 0 6px rgba(16, 185, 129, 0);
+    }
+}
+
+.contact-info-header h3 {
     color: #fff;
+    font-size: 1.8rem;
+    font-weight: 800;
+    margin: 0.8rem 0 0.6rem;
 }
 
-/* Contact Form */
-.contact-form {
+.contact-info-header p {
+    color: #94a3b8;
+    font-size: 0.92rem;
+    line-height: 1.7;
+    margin: 0;
+}
+
+.contact-details {
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
+}
+
+.contact-detail-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.contact-detail-icon {
+    width: 42px;
+    height: 42px;
+    background: rgba(255, 255, 255, 0.07);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #7dd3fc;
+    font-size: 1rem;
+    flex-shrink: 0;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.contact-detail-label {
+    display: block;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    margin-bottom: 0.15rem;
+}
+
+.contact-detail-val {
+    display: block;
+    color: #e2e8f0;
+    font-size: 0.92rem;
+    font-weight: 500;
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+a.contact-detail-val:hover {
+    color: #7dd3fc;
+}
+
+.contact-socials {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.7rem;
+    margin-top: auto;
+}
+
+.contact-social-btn {
+    width: 40px;
+    height: 40px;
+    background: rgba(255, 255, 255, 0.07);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #94a3b8;
+    font-size: 1.05rem;
+    text-decoration: none;
+    transition: all 0.25s;
+}
+
+.contact-social-btn:hover {
+    background: var(--accent-dark);
+    border-color: var(--accent-dark);
+    color: #fff;
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(14, 165, 233, 0.3);
+}
+
+/* ------- RIGHT: Form Panel ------- */
+.contact-form-panel {
     background: #fff;
     border: 1px solid var(--glass-border);
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.05);
-    padding: 3rem;
     border-radius: 24px;
+    padding: 2.8rem;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.05);
+}
+
+.contact-form-inner {
+    display: flex;
+    flex-direction: column;
+    gap: 1.3rem;
+}
+
+.contact-form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.2rem;
+}
+
+.contact-field label {
+    display: block;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--text-color);
+    margin-bottom: 0.5rem;
+    letter-spacing: 0.2px;
+}
+
+.contact-field label span {
+    color: #ef4444;
+}
+
+.contact-input-wrap {
+    position: relative;
+}
+
+.contact-input-wrap i {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #94a3b8;
+    font-size: 0.9rem;
+    pointer-events: none;
+    transition: color 0.2s;
+}
+
+.contact-textarea-wrap i {
+    top: 1.1rem;
+    transform: none;
+}
+
+.contact-input-wrap input,
+.contact-input-wrap textarea {
+    width: 100%;
+    padding: 0.85rem 1rem 0.85rem 2.7rem;
+    background: #f8fafc;
+    border: 1.5px solid #e2e8f0;
+    color: var(--text-color);
+    border-radius: 12px;
+    font-size: 0.92rem;
+    font-family: inherit;
+    transition: border-color 0.25s, box-shadow 0.25s, background 0.25s;
+    box-sizing: border-box;
+    resize: vertical;
+}
+
+.contact-input-wrap input:focus,
+.contact-input-wrap textarea:focus {
+    outline: none;
+    border-color: var(--accent-dark);
+    background: #fff;
+    box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.12);
+}
+
+.contact-input-wrap input:focus~i,
+.contact-input-wrap:focus-within i {
+    color: var(--accent-dark);
+}
+
+/* Submit Button */
+.contact-submit-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+    width: 100%;
+    padding: 1rem 2rem;
+    background: linear-gradient(135deg, var(--accent-color), var(--accent-dark));
+    color: #fff;
+    border: none;
+    border-radius: 14px;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    letter-spacing: 0.3px;
+    box-shadow: 0 8px 24px rgba(14, 165, 233, 0.3);
+    margin-top: 0.4rem;
+}
+
+.contact-submit-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 14px 30px rgba(14, 165, 233, 0.4);
+}
+
+.contact-submit-btn i {
+    transition: transform 0.3s;
+    font-size: 0.9rem;
+}
+
+.contact-submit-btn:hover i {
+    transform: translateX(4px) translateY(-2px) rotate(-30deg);
+}
+
+/* Success state */
+.contact-success {
+    text-align: center;
+    padding: 3rem 1rem;
+}
+
+.contact-success-icon {
+    width: 72px;
+    height: 72px;
+    background: linear-gradient(135deg, #10b981, #059669);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1.2rem;
+    font-size: 1.8rem;
+    color: #fff;
+    box-shadow: 0 12px 30px rgba(16, 185, 129, 0.35);
+}
+
+.contact-success h3 {
+    font-size: 1.6rem;
+    color: var(--text-color);
+    margin-bottom: 0.5rem;
+}
+
+.contact-success p {
+    color: var(--text-light);
+    font-size: 0.95rem;
+}
+
+/* Error banner */
+.contact-error-banner {
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    color: #dc2626;
+    padding: 0.9rem 1.2rem;
+    border-radius: 12px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+    .contact-wrapper {
+        grid-template-columns: 1fr;
+    }
+
+    .contact-form-row {
+        grid-template-columns: 1fr;
+    }
 }
 
 input,
@@ -519,5 +1202,769 @@ footer {
         width: 100%;
         left: 0;
         transform: rotate(0deg);
+    }
+}
+
+/* ========================================
+   FELLOWSHIP SECTION
+   ======================================== */
+
+.fellowship-section {
+    margin-top: 0;
+}
+
+.fellowship-header {
+    text-align: center;
+    margin-bottom: 2.5rem;
+}
+
+.fellowship-header h3 {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--text-color);
+    margin-bottom: 0.5rem;
+}
+
+.fellowship-header p {
+    color: var(--text-light);
+    font-size: 1rem;
+}
+
+/* ---- Filter Tab Bar ---- */
+.fellowship-tabs {
+    display: flex;
+    gap: 0.5rem;
+    background: #f1f5f9;
+    padding: 0.4rem;
+    border-radius: 16px;
+    margin-bottom: 2.5rem;
+    width: fit-content;
+    margin-left: auto;
+    margin-right: auto;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.ftab {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.7rem 1.6rem;
+    border: none;
+    background: transparent;
+    border-radius: 12px;
+    cursor: pointer;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+    font-size: 0.92rem;
+    color: var(--text-light);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+}
+
+.ftab:hover {
+    color: var(--text-color);
+    background: rgba(255, 255, 255, 0.7);
+}
+
+.ftab.active {
+    background: #fff;
+    color: var(--text-color);
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.ftab-icon {
+    font-size: 1.1rem;
+}
+
+.ftab-count {
+    background: var(--accent-dark);
+    color: #fff;
+    font-size: 0.72rem;
+    padding: 0.1rem 0.45rem;
+    border-radius: 20px;
+    font-weight: 700;
+    min-width: 20px;
+    text-align: center;
+}
+
+/* Panel show/hide */
+.ftab-panel {
+    display: none;
+}
+
+.ftab-panel.active {
+    display: block;
+    animation: fadePanel 0.4s ease;
+}
+
+@keyframes fadePanel {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.ftab-empty {
+    text-align: center;
+    color: var(--text-light);
+    padding: 3rem;
+    font-size: 1rem;
+}
+
+/* ========================================
+   FELLOWSHIP SKILLS PANEL
+   Glowing pill/badge cards
+   ======================================== */
+.fs-skills-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 1.2rem;
+    width: 100%;
+}
+
+.fs-skill-card {
+    border-radius: 18px;
+    padding: 2px;
+    background: linear-gradient(135deg, rgba(0, 0, 0, 0.06), rgba(0, 0, 0, 0.02));
+    transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.35s;
+}
+
+.fs-skill-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.1);
+}
+
+.fs-skill-glow {
+    background: #fff;
+    border-radius: 16px;
+    padding: 1.5rem 1.5rem 1.2rem;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    position: relative;
+    overflow: hidden;
+}
+
+.fs-skill-glow::before {
+    content: '';
+    position: absolute;
+    top: -30px;
+    right: -30px;
+    width: 100px;
+    height: 100px;
+    background: radial-gradient(circle, var(--glow, #7dd3fc) 0%, transparent 70%);
+    opacity: 0.25;
+    border-radius: 50%;
+}
+
+.fs-skill-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.7rem;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.fs-skill-name {
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: #111;
+    letter-spacing: -0.3px;
+}
+
+.fs-prof-badge {
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 0.2rem 0.6rem;
+    border-radius: 20px;
+    white-space: nowrap;
+    letter-spacing: 0.2px;
+    text-transform: uppercase;
+}
+
+.fs-skill-desc {
+    font-size: 0.83rem;
+    color: var(--text-light);
+    line-height: 1.5;
+    margin-bottom: 0.9rem;
+}
+
+.fs-prof-bar {
+    height: 4px;
+    background: #f1f5f9;
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 0.9rem;
+}
+
+.fs-prof-fill {
+    height: 100%;
+    border-radius: 10px;
+    transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.fs-skill-company {
+    font-size: 0.75rem;
+    color: #94a3b8;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+/* ========================================
+   FELLOWSHIP FRAMEWORKS PANEL
+   Dark terminal-style cards
+   ======================================== */
+.fs-fw-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1.2rem;
+    width: 100%;
+}
+
+.fs-fw-card {
+    background: #0f172a;
+    border-radius: 16px;
+    overflow: hidden;
+    transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.35s;
+    border: 1px solid #1e293b;
+}
+
+.fs-fw-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.25);
+    border-color: #334155;
+}
+
+.fs-fw-terminal {
+    background: #1e293b;
+    padding: 0.6rem 0.9rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+
+.fs-fw-dots {
+    display: flex;
+    gap: 0.3rem;
+}
+
+.fs-fw-dots span {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.fs-fw-dots span:nth-child(1) {
+    background: #ef4444;
+}
+
+.fs-fw-dots span:nth-child(2) {
+    background: #f59e0b;
+}
+
+.fs-fw-dots span:nth-child(3) {
+    background: #10b981;
+}
+
+.fs-fw-category {
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 0.15rem 0.5rem;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+}
+
+.fs-fw-cat-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.fs-fw-body {
+    padding: 1.2rem 1.2rem 1.4rem;
+}
+
+.fs-fw-name {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: #e2e8f0;
+    margin-bottom: 0.5rem;
+    letter-spacing: -0.3px;
+}
+
+.fs-fw-desc {
+    font-size: 0.82rem;
+    color: #64748b;
+    line-height: 1.5;
+    margin-bottom: 0.9rem;
+}
+
+.fs-fw-from {
+    font-size: 0.74rem;
+    color: #475569;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+/* ========================================
+   FELLOWSHIP PROJECTS PANEL
+   Horizontal numbered list with border
+   ======================================== */
+.fs-proj-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    max-width: 900px;
+    margin: 0 auto;
+    border: 1px solid #e2e8f0;
+    border-radius: 20px;
+    overflow: hidden;
+}
+
+.fs-proj-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 1.5rem;
+    padding: 1.6rem 2rem;
+    border-bottom: 1px solid #f1f5f9;
+    background: #fff;
+    transition: background 0.25s;
+}
+
+.fs-proj-row:last-child {
+    border-bottom: none;
+}
+
+.fs-proj-row:hover {
+    background: #f8fafc;
+}
+
+.fs-proj-num {
+    font-size: 1.6rem;
+    font-weight: 900;
+    color: #e2e8f0;
+    line-height: 1;
+    min-width: 44px;
+    padding-top: 0.2rem;
+    letter-spacing: -1px;
+}
+
+.fs-proj-content {
+    flex: 1;
+}
+
+.fs-proj-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.4rem;
+}
+
+.fs-proj-name {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text-color);
+    margin: 0;
+}
+
+.fs-proj-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    flex-wrap: wrap;
+}
+
+.fs-proj-gh {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.3rem 0.8rem;
+    background: #111;
+    color: #fff;
+    border-radius: 20px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: 0.25s;
+}
+
+.fs-proj-gh:hover {
+    background: #333;
+    transform: translateY(-1px);
+}
+
+.fs-proj-org {
+    font-size: 0.78rem;
+    color: var(--text-light);
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.fs-proj-desc {
+    font-size: 0.88rem;
+    color: var(--text-light);
+    line-height: 1.55;
+    margin-bottom: 0.7rem;
+}
+
+.fs-proj-techs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+}
+
+.fs-proj-tech {
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 0.2rem 0.55rem;
+    border-radius: 5px;
+    background: #e0f2fe;
+    color: #0284c7;
+}
+
+/* Responsive for fellowship */
+@media (max-width: 900px) {
+    .fs-skills-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .fs-fw-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 600px) {
+    .fs-skills-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .fs-fw-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .fs-proj-row {
+        padding: 1.2rem;
+        gap: 1rem;
+    }
+
+    .fs-proj-num {
+        font-size: 1.2rem;
+        min-width: 32px;
+    }
+
+    .fellowship-tabs {
+        width: 100%;
+    }
+
+    .ftab {
+        padding: 0.6rem 1rem;
+        font-size: 0.82rem;
+    }
+}
+
+/* ========================================
+   FELLOWSHIP HERO TWO-COLUMN LAYOUT
+   ======================================== */
+
+.fellowship-hero-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4rem;
+    align-items: flex-start;
+    margin-bottom: 6rem;
+    padding-bottom: 4rem;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.fellowship-hero-row:last-of-type {
+    border-bottom: none;
+    margin-bottom: 0;
+}
+
+/* Alternating layout */
+.fellowship-hero-row--reverse {
+    direction: rtl;
+}
+
+.fellowship-hero-row--reverse>* {
+    direction: ltr;
+}
+
+/* ------ Image Column (Hero-Visual Clone) ------ */
+.fellowship-img-col {
+    position: sticky;
+    top: 6rem;
+    /* Extra horizontal padding gives absolute-positioned badges room to breathe */
+    padding: 0 2.5rem;
+    overflow: visible;
+}
+
+/* The visual wrapper — mirrors .hero-visual */
+.fellowship-visual {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 480px;
+    height: 100%;
+    overflow: visible;
+}
+
+/* Animated blob background — mirrors .hero-bg-blob */
+.fellowship-bg-blob {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #e0f2fe 0%, #f0f9ff 100%);
+    border-radius: 40% 60% 70% 30% / 40% 50% 60% 50%;
+    z-index: 0;
+    animation: blob-bounce 10s infinite ease-in-out;
+}
+
+/* Photo — mirrors .profile-img */
+.fellowship-photo {
+    width: 100%;
+    max-width: 420px;
+    height: auto;
+    object-fit: cover;
+    border-radius: 24px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+    z-index: 1;
+    position: relative;
+}
+
+.fellowship-photo--logo {
+    object-fit: contain;
+    padding: 2.5rem;
+    background: #fff;
+}
+
+.fellowship-photo--placeholder {
+    width: 380px;
+    height: 460px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #e0f2fe, #f0f9ff);
+    border-radius: 24px;
+    z-index: 1;
+    position: relative;
+}
+
+.fellowship-photo--placeholder i {
+    font-size: 5rem;
+    color: rgba(30, 41, 59, 0.15);
+}
+
+/* Floating Badges — mirrors .floating-badge  */
+.fellowship-float-badge {
+    position: absolute;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    padding: 0.8rem 1.5rem;
+    border-radius: 50px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+    font-weight: 600;
+    font-size: 0.9rem;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    animation: float 4s infinite ease-in-out;
+    white-space: nowrap;
+}
+
+.fellowship-float-badge i {
+    font-size: 1.1rem;
+}
+
+/* Badge positions + colours — mirrors badge-1/2/3 */
+/* Positions are relative to .fellowship-visual; the col's 2.5rem padding
+   ensures these don't exceed the rendered column edge. */
+.fbadge-1 {
+    top: 10%;
+    right: -1.5rem;
+    /* overlaps into padding — stays within col */
+    animation-delay: 0s;
+    color: #059669;
+}
+
+.fbadge-2 {
+    bottom: 20%;
+    left: -1.5rem;
+    /* overlaps into padding — stays within col */
+    animation-delay: 1.5s;
+    color: #3b82f6;
+}
+
+.fbadge-3 {
+    top: 48%;
+    right: -1.5rem;
+    /* overlaps into padding — stays within col */
+    animation-delay: 2.5s;
+    color: #d946ef;
+}
+
+
+/* ------ Content Column ------ */
+.fellowship-content-col {
+    padding-top: 0.5rem;
+    /* min-width:0 is CRITICAL — grid items default to min-width:auto
+       which lets children blow past the 1fr boundary */
+    min-width: 0;
+    overflow: hidden;
+}
+
+.fellowship-meta-row {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    margin-bottom: 1.1rem;
+    flex-wrap: wrap;
+}
+
+.fellowship-company-logo {
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    object-fit: cover;
+    border: 1px solid #e2e8f0;
+}
+
+.fellowship-company-name {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--accent-dark);
+    letter-spacing: 0.2px;
+}
+
+.fellowship-duration-pill {
+    margin-left: auto;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--text-light);
+    background: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    border-radius: 50px;
+    padding: 0.25rem 0.9rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    white-space: nowrap;
+}
+
+.fellowship-role {
+    font-size: 1.95rem;
+    font-weight: 800;
+    color: var(--text-color);
+    line-height: 1.25;
+    margin-bottom: 1rem;
+    letter-spacing: -0.6px;
+}
+
+.fellowship-description {
+    font-size: 0.97rem;
+    color: var(--text-light);
+    line-height: 1.7;
+    margin-bottom: 2rem;
+    max-width: 520px;
+}
+
+/* tabs flush-left in the content col */
+.fellowship-content-col .fellowship-tabs {
+    margin-left: 0;
+    margin-right: 0;
+    width: fit-content;
+}
+
+/* Responsive: stack vertically on tablet */
+@media (max-width: 1024px) {
+    .fellowship-hero-row {
+        grid-template-columns: 1fr;
+        gap: 2.5rem;
+        margin-bottom: 4rem;
+        padding-bottom: 3rem;
+    }
+
+    .fellowship-hero-row--reverse {
+        direction: ltr;
+    }
+
+    .fellowship-img-col {
+        position: static;
+    }
+
+    .fellowship-visual {
+        min-height: 380px;
+    }
+
+    .fellowship-photo {
+        max-width: 340px;
+    }
+
+    .fellowship-role {
+        font-size: 1.55rem;
+    }
+}
+
+@media (max-width: 640px) {
+    .fellowship-visual {
+        min-height: 300px;
+    }
+
+    .fellowship-photo {
+        max-width: 260px;
+        border-radius: 18px;
+    }
+
+    /* Hide badges that overflow on tiny screens */
+    .fbadge-1,
+    .fbadge-3 {
+        display: none;
+    }
+
+    .fbadge-2 {
+        bottom: 1rem;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 0.8rem;
+        padding: 0.6rem 1.2rem;
+    }
+
+    .fellowship-role {
+        font-size: 1.3rem;
+    }
+
+    .fellowship-duration-pill {
+        margin-left: 0;
+    }
+
+    .fellowship-meta-row {
+        gap: 0.5rem;
+    }
+
+    .fellowship-hero-row {
+        margin-bottom: 3rem;
+        padding-bottom: 2.5rem;
     }
 }

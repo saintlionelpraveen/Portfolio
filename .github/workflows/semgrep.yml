@@ -1,0 +1,38 @@
+name: Semgrep SQL Injection Scan
+
+on:
+  push:
+    branches: ["feat/admin"]
+  pull_request:
+    branches: ["main", "feat/admin"]
+
+permissions:
+  security-events: write
+  contents: read
+
+jobs:
+  semgrep-scan:
+    name: Semgrep Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Semgrep
+        run: pip install semgrep
+
+      - name: Run Semgrep (Console Output)
+        run: semgrep scan --config ./semgrep.yml --error
+        continue-on-error: true
+
+      - name: Run Semgrep (SARIF Output)
+        run: semgrep scan --config ./semgrep.yml --sarif -o semgrep-results.sarif
+        continue-on-error: true
+
+      - name: Upload SARIF to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: semgrep-results.sarif
+          category: semgrep
+
+      - name: Fail if findings exist
+        run: semgrep scan --config ./semgrep.yml --error
