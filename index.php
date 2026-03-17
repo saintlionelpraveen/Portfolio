@@ -89,13 +89,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['send_message'])) {
 
             <!-- Floating Badges -->
             <div class="floating-badge badge-1">
-                <i class="fas fa-palette"></i> UI/UX Designer
+                <i class="fas fa-palette"></i> Praveen
             </div>
             <div class="floating-badge badge-2">
-                <i class="fas fa-code"></i> Webflow Developer
+                <i class="fas fa-code"></i> ci
             </div>
             <div class="floating-badge badge-3">
-                <i class="fas fa-layer-group"></i> Product Designer
+                <i class="fas fa-layer-group"></i> cd
             </div>
         </div>
     </section>
