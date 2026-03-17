@@ -120,13 +120,23 @@ pipeline {
                         )
                     )
 
-                    REM Copy all files from workspace to local directory
-                    xcopy /E /Y /I "%WORKSPACE%\\*" "%LOCAL_DEPLOY_DIR%\\" /EXCLUDE:%WORKSPACE%\\.gitignore
+                    REM Copy all files from workspace to local directory (excluding .git via a temporary exclude list)
+                    echo .git> "%WORKSPACE%\\exclude.txt"
+                    xcopy /E /Y /I "%WORKSPACE%\\*" "%LOCAL_DEPLOY_DIR%\\" /EXCLUDE:%WORKSPACE%\\exclude.txt
+                    set XCOPY_STATUS=%ERRORLEVEL%
+                    del "%WORKSPACE%\\exclude.txt"
 
-                    echo ============================================
-                    echo   Local directory updated successfully!
-                    echo   Path: %LOCAL_DEPLOY_DIR%
-                    echo ============================================
+                    if %XCOPY_STATUS% neq 0 (
+                        echo ============================================
+                        echo   ❌ Failed to copy files to local directory!
+                        echo ============================================
+                        exit /b %XCOPY_STATUS%
+                    ) else (
+                        echo ============================================
+                        echo   ✅ Local directory updated successfully!
+                        echo   Path: %LOCAL_DEPLOY_DIR%
+                        echo ============================================
+                    )
                 '''
             }
         }
