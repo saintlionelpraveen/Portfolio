@@ -8,7 +8,7 @@ pipeline {
     }
 
     triggers {
-        // Poll GitHub every 5 minutes for changes on the main branch
+        // Poll GitHub every 5 minutes for changes on the deploy branch
         pollSCM('H/5 * * * *')
     }
 
@@ -23,7 +23,7 @@ pipeline {
 
         stage('Checkout') {
             steps {
-                echo '📥 Pulling latest approved code from main branch...'
+                echo '📥 Pulling latest approved code from deploy branch...'
                 checkout scm
             }
         }

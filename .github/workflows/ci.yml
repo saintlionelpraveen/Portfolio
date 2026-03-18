@@ -1,6 +1,6 @@
 name: CI Pipeline
 
-# Triggers ONLY when a Pull Request is merged into main
+# Triggers ONLY when a Pull Request is merged into  main
 on:
   pull_request:
     branches: [main]
@@ -118,7 +118,7 @@ jobs:
           echo "============================================"
 
   # ─────────────────────────────────────────────
-  # Job 3: Trigger CD (push to main branch)
+  # Job 3: Trigger CD (push to deploy branch)
   # ─────────────────────────────────────────────
   trigger-cd:
     name: 🚀 Trigger Jenkins CD
@@ -131,11 +131,11 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: 🔀 Push to main branch
+      - name: 🔀 Push to deploy branch
         run: |
-          echo "Pushing approved code to 'main' branch..."
-          git push origin HEAD:main --force
+          echo "Pushing approved code to 'deploy' branch..."
+          git push origin HEAD:deploy --force
           echo "============================================"
-          echo "  ✅ Code pushed to 'main' branch!"
+          echo "  ✅ Code pushed to 'deploy' branch!"
           echo "  Jenkins will pick this up automatically."
           echo "============================================"
