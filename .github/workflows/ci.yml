@@ -107,7 +107,7 @@ jobs:
     name: ⏸️ Waiting for Deployment Approval
     needs: ci
     runs-on: ubuntu-latest
-    environment: production
+    environment: production  # This is for GitHub Environments name for the approval gate
 
     steps:
       - name: ✅ Deployment Approved
@@ -118,7 +118,7 @@ jobs:
           echo "============================================"
 
   # ─────────────────────────────────────────────
-  # Job 3: Trigger CD (push to deploy branch)
+  # Job 3: Trigger CD (push to main branch)
   # ─────────────────────────────────────────────
   trigger-cd:
     name: 🚀 Trigger Jenkins CD
@@ -131,11 +131,11 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: 🔀 Push to deploy branch
+      - name: 🔀 Push to main branch
         run: |
-          echo "Pushing approved code to 'deploy' branch..."
-          git push origin HEAD:deploy --force
+          echo "Pushing approved code to 'main' branch..."
+          git push origin HEAD:main --force
           echo "============================================"
-          echo "  ✅ Code pushed to 'deploy' branch!"
+          echo "  ✅ Code pushed to 'main' branch!"
           echo "  Jenkins will pick this up automatically."
           echo "============================================"
