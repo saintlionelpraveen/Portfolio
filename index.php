@@ -234,13 +234,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['send_message'])) {
             <div class="marquee-item"><i class="fas fa-star"></i> Frappe</div>
 
             <!-- Duplicate for seamless scroll -->
-            <div class="marquee-item"><i class="fas fa-star"></i> Design</div>
+            <div class="marquee-item"><i class="fas fa-star"></i> DevOps</div>
             <div class="marquee-item"><i class="fas fa-star"></i> Kubernets</div>
             <div class="marquee-item"><i class="fas fa-star"></i> CI/CD</div>
             <div class="marquee-item"><i class="fas fa-star"></i> UI/UX</div>
             <div class="marquee-item"><i class="fas fa-star"></i> Development</div>
             <div class="marquee-item"><i class="fas fa-star"></i> Discover</div>
-            <div class="marquee-item"><i class="fas fa-star"></i> Design</div>
+            <div class="marquee-item"><i class="fas fa-star"></i> DevOps</div>
             <div class="marquee-item"><i class="fas fa-star"></i> Development</div>
             <div class="marquee-item"><i class="fas fa-star"></i> Discover</div>
             <div class="marquee-item"><i class="fas fa-star"></i> Frappe</div>

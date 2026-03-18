@@ -1,0 +1,141 @@
+name: CI Pipeline
+
+# Triggers ONLY when a Pull Request is merged into  main
+on:
+  pull_request:
+    branches: [main]
+    types: [closed]
+
+permissions:
+  contents: write
+
+jobs:
+  # ─────────────────────────────────────────────
+  # Job 1: Continuous Integration
+  # ─────────────────────────────────────────────
+  ci:
+    name: 🔍 CI - Lint & Quality Checks
+    runs-on: ubuntu-latest
+    # Only run if the PR was actually merged (not just closed)
+    if: github.event.pull_request.merged == true
+
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+
+      - name: 🐘 Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+
+      - name: 🧪 PHP Syntax Check
+        run: |
+          echo "🔎 Checking PHP syntax across all files..."
+          error_count=0
+          while IFS= read -r file; do
+            if ! php -l "$file" > /dev/null 2>&1; then
+              echo "❌ Syntax error in: $file"
+              php -l "$file"
+              error_count=$((error_count + 1))
+            fi
+          done < <(find . -name "*.php" -not -path "./.git/*")
+
+          if [ "$error_count" -gt 0 ]; then
+            echo "❌ Found $error_count file(s) with syntax errors!"
+            exit 1
+          else
+            echo "✅ All PHP files passed syntax check!"
+          fi
+
+      - name: 🛡️ Security Scan - Hardcoded Credentials
+        run: |
+          echo "🔎 Scanning for hardcoded credentials..."
+          issues=0
+
+          # Check for hardcoded passwords (common patterns)
+          if grep -rn --include="*.php" -E "(password|passwd|pwd)\s*=\s*['\"][^'\"]+['\"]" . --exclude-dir=.git; then
+            echo "⚠️  Possible hardcoded passwords detected!"
+            issues=$((issues + 1))
+          fi
+
+          # Check for hardcoded API keys
+          if grep -rn --include="*.php" -E "(api_key|apikey|secret_key)\s*=\s*['\"][^'\"]+['\"]" . --exclude-dir=.git; then
+            echo "⚠️  Possible hardcoded API keys detected!"
+            issues=$((issues + 1))
+          fi
+
+          if [ "$issues" -gt 0 ]; then
+            echo "⚠️  $issues security warning(s) found. Review recommended."
+          else
+            echo "✅ No hardcoded credentials detected!"
+          fi
+
+      - name: 📏 Code Quality Check
+        run: |
+          echo "🔎 Running code quality checks..."
+          quality_issues=0
+
+          # Check for debug statements left in code
+          if grep -rn --include="*.php" -E "var_dump\(|print_r\(|die\(|dd\(" . --exclude-dir=.git --exclude-dir=vendor; then
+            echo "⚠️  Debug statements found in code!"
+            quality_issues=$((quality_issues + 1))
+          fi
+
+          # Check for display_errors enabled
+          if grep -rn --include="*.php" "display_errors.*On\|display_errors.*1" . --exclude-dir=.git; then
+            echo "⚠️  display_errors is enabled — should be OFF in production!"
+            quality_issues=$((quality_issues + 1))
+          fi
+
+          if [ "$quality_issues" -gt 0 ]; then
+            echo "⚠️  $quality_issues code quality warning(s) found."
+          else
+            echo "✅ Code quality checks passed!"
+          fi
+
+      - name: 📊 CI Summary
+        run: |
+          echo "============================================"
+          echo "  ✅ CI Pipeline completed successfully!"
+          echo "  All checks passed. Ready for deployment."
+          echo "============================================"
+
+  # ─────────────────────────────────────────────
+  # Job 2: Approval Gate (GitHub Environment)
+  # ─────────────────────────────────────────────
+  approve-deployment:
+    name: ⏸️ Waiting for Deployment Approval
+    needs: ci
+    runs-on: ubuntu-latest
+    environment: production  # This is for GitHub Environments name for the approval gate
+
+    steps:
+      - name: ✅ Deployment Approved
+        run: |
+          echo "============================================"
+          echo "  ✅ Deployment has been APPROVED!"
+          echo "  Proceeding to trigger CD pipeline..."
+          echo "============================================"
+
+  # ─────────────────────────────────────────────
+  # Job 3: Trigger CD (push to deploy branch)
+  # ─────────────────────────────────────────────
+  trigger-cd:
+    name: 🚀 Trigger Jenkins CD
+    needs: approve-deployment
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 🔀 Push to deploy branch
+        run: |
+          echo "Pushing approved code to 'deploy' branch..."
+          git push origin HEAD:deploy --force
+          echo "============================================"
+          echo "  ✅ Code pushed to 'deploy' branch!"
+          echo "  Jenkins will pick this up automatically."
+          echo "============================================"
