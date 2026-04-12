@@ -155,7 +155,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['send_message'])) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?php echo $hero['title']; ?> - Portfolios</title>
+    <meta name="description" content="DevOps Engineer & Cloud Architect — CI/CD, Kubernetes, Docker, Infrastructure as Code">
+    <title><?php echo $hero['title']; ?> — DevOps Portfolio</title>
     <link rel="stylesheet" href="assets/css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
@@ -186,12 +187,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['send_message'])) {
     <!-- Hero Section -->
     <section id="home" class="hero">
         <div class="hero-text fade-in">
-            <h1><?php echo htmlspecialchars($hero['title']); ?></h1>
+            <h1><span class="terminal-prefix">~/</span><?php echo htmlspecialchars($hero['title']); ?><span class="cursor-blink"></span></h1>
             <p><?php echo htmlspecialchars($hero['subtitle']); ?></p>
 
             <div class="cta-group">
                 <a href="#contact" class="btn-primary"><?php echo get_site_content('Contact Me'); ?> <i
-                        class="fas fa-arrow-right"></i></a>
+                        class="fas fa-terminal"></i></a>
 
 
             </div>
@@ -206,53 +207,64 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['send_message'])) {
                     class="profile-img">
             <?php endif; ?>
 
-            <!-- Floating Badges -->
+            <!-- Floating Status Pods -->
             <div class="floating-badge badge-1">
-                <i class="fas fa-palette"></i> <?php echo get_site_content('Tech Addict'); ?>
+                <i class="fas fa-dharmachakra"></i> <?php echo get_site_content('Tech Addict'); ?>
             </div>
             <div class="floating-badge badge-2">
-                <i class="fas fa-code"></i> <?php echo get_site_content('Software Engineer'); ?>
+                <i class="fab fa-docker"></i> <?php echo get_site_content('Software Engineer'); ?>
             </div>
             <div class="floating-badge badge-3">
-                <i class="fas fa-layer-group"></i> <?php echo get_site_content('Full Stack Developer'); ?>
+                <i class="fas fa-code-branch"></i> <?php echo get_site_content('Full Stack Developer'); ?>
             </div>
         </div>
     </section>
 
-    <!-- Marquee Strip -->
+    <!-- Marquee Strip — DevOps Toolchain -->
     <div class="marquee-container">
         <div class="marquee-content">
-            <div class="marquee-item"><i class="fas fa-star"></i> Design</div>
-            <div class="marquee-item"><i class="fas fa-star"></i> Kubernets</div>
-            <div class="marquee-item"><i class="fas fa-star"></i> CI/CD</div>
-            <div class="marquee-item"><i class="fas fa-star"></i> UI/UX</div>
-            <div class="marquee-item"><i class="fas fa-star"></i> Development</div>
-            <div class="marquee-item"><i class="fas fa-star"></i> Discover</div>
-            <div class="marquee-item"><i class="fas fa-star"></i> Design</div>
-            <div class="marquee-item"><i class="fas fa-star"></i> Development</div>
-            <div class="marquee-item"><i class="fas fa-star"></i> Discover</div>
-            <div class="marquee-item"><i class="fas fa-star"></i> Frappe</div>
+            <div class="marquee-item"><i class="fas fa-circle"></i> Docker</div>
+            <div class="marquee-item"><i class="fas fa-circle"></i> Kubernetes</div>
+            <div class="marquee-item"><i class="fas fa-circle"></i> Jenkins</div>
+            <div class="marquee-item"><i class="fas fa-circle"></i> CI/CD</div>
+            <div class="marquee-item"><i class="fas fa-circle"></i> Terraform</div>
+            <div class="marquee-item"><i class="fas fa-circle"></i> Linux</div>
+            <div class="marquee-item"><i class="fas fa-circle"></i> AWS</div>
+            <div class="marquee-item"><i class="fas fa-circle"></i> Git</div>
+            <div class="marquee-item"><i class="fas fa-circle"></i> Ansible</div>
+            <div class="marquee-item"><i class="fas fa-circle"></i> Prometheus</div>
+            <div class="marquee-item"><i class="fas fa-circle"></i> Grafana</div>
+            <div class="marquee-item"><i class="fas fa-circle"></i> Frappe</div>
 
             <!-- Duplicate for seamless scroll -->
-            <div class="marquee-item"><i class="fas fa-star"></i> DevOps</div>
-            <div class="marquee-item"><i class="fas fa-star"></i> Kubernets</div>
-            <div class="marquee-item"><i class="fas fa-star"></i> CI/CD</div>
-            <div class="marquee-item"><i class="fas fa-star"></i> UI/UX</div>
-            <div class="marquee-item"><i class="fas fa-star"></i> Development</div>
-            <div class="marquee-item"><i class="fas fa-star"></i> Discover</div>
-            <div class="marquee-item"><i class="fas fa-star"></i> DevOps</div>
-            <div class="marquee-item"><i class="fas fa-star"></i> Development</div>
-            <div class="marquee-item"><i class="fas fa-star"></i> Discover</div>
-            <div class="marquee-item"><i class="fas fa-star"></i> Frappe</div>
+            <div class="marquee-item"><i class="fas fa-circle"></i> Docker</div>
+            <div class="marquee-item"><i class="fas fa-circle"></i> Kubernetes</div>
+            <div class="marquee-item"><i class="fas fa-circle"></i> Jenkins</div>
+            <div class="marquee-item"><i class="fas fa-circle"></i> CI/CD</div>
+            <div class="marquee-item"><i class="fas fa-circle"></i> Terraform</div>
+            <div class="marquee-item"><i class="fas fa-circle"></i> Linux</div>
+            <div class="marquee-item"><i class="fas fa-circle"></i> AWS</div>
+            <div class="marquee-item"><i class="fas fa-circle"></i> Git</div>
+            <div class="marquee-item"><i class="fas fa-circle"></i> Ansible</div>
+            <div class="marquee-item"><i class="fas fa-circle"></i> Prometheus</div>
+            <div class="marquee-item"><i class="fas fa-circle"></i> Grafana</div>
+            <div class="marquee-item"><i class="fas fa-circle"></i> Frappe</div>
         </div>
     </div>
 
     <!-- About Section -->
     <section id="about">
         <h2 class="fade-in">About Me</h2>
+        <div class="section-line"></div>
         <div class="about-container fade-in">
+            <div class="about-terminal-bar">
+                <span class="dot"></span>
+                <span class="dot"></span>
+                <span class="dot"></span>
+                <span class="terminal-title">~/about — profile.yml</span>
+            </div>
             <div class="about-text">
-                <p style="font-size: 1.2rem; line-height: 1.8; color: var(--text-light);">
+                <p style="font-size: 1.1rem; line-height: 1.85; color: var(--text-secondary);">
                     <?php echo nl2br(htmlspecialchars(isset($about['content']) ? $about['content'] : '')); ?>
                 </p>
                 <div style="margin-top: 2rem; display: flex; gap: 1rem;">
@@ -273,7 +285,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['send_message'])) {
 
     <!-- Fellowship Section -->
     <section id="fellowship">
-        <h2 class="fade-in">Fellowship <span style="color:var(--accent-dark)">&amp; Experience</span></h2>
+        <h2 class="fade-in">Fellowship <span style="color:var(--accent-cyan)">&amp; Experience</span></h2>
+        <div class="section-line"></div>
 
         <?php if (!empty($internships)):
             // Build per-fellowship lookup maps
@@ -472,7 +485,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['send_message'])) {
 
     <!-- Skills Section -->
     <section id="skills">
-        <h2 class="fade-in">My Expertise</h2>
+        <h2 class="fade-in">Tech Stack</h2>
+        <div class="section-line"></div>
         <div class="skills-grid">
             <?php
             $skills_query = $conn->query("SELECT * FROM skills ORDER BY percentage DESC");
@@ -530,6 +544,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['send_message'])) {
     <!-- Projects Section -->
     <section id="projects">
         <h2 class="fade-in">Featured Works</h2>
+        <div class="section-line"></div>
         <div class="projects-grid">
             <?php
             $projects_query = $conn->query("SELECT *, YEAR(created_at) as project_year FROM projects ORDER BY created_at DESC");
@@ -587,6 +602,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['send_message'])) {
     <!-- Contact Section -->
     <section id="contact">
         <h2 class="fade-in">Let's Work Together</h2>
+        <div class="section-line"></div>
         <p class="contact-subtitle fade-in">Have a project in mind or just want to say hello? I'd love to hear from you.
         </p>
         <div class="contact-wrapper fade-in">
@@ -705,8 +721,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['send_message'])) {
 
     <footer class="fade-in">
         <center>
-            <h1 class="logo" style="margin-bottom: 1rem; display: inline-block;">Praveen.Y</h1>
-            <p style="color: var(--text-light);">&copy; <?php echo date('Y'); ?>. All rights reserved.</p>
+            <h1 class="logo" style="margin-bottom: 1rem; display: inline-block;"><span style="color: var(--accent-green);">~/</span>Praveen.Y</h1>
+            <p>&copy; <?php echo date('Y'); ?> | Built with <i class="fas fa-dharmachakra" style="color: var(--accent-cyan); font-size: 0.85rem;"></i> &amp; <i class="fas fa-code-branch" style="color: var(--accent-green); font-size: 0.85rem;"></i></p>
         </center>
     </footer>
 
