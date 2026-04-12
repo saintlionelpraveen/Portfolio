@@ -601,13 +601,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['send_message'])) {
 
     <!-- Timeline / Journey Section -->
     <?php
-    $tl_query = $conn->query("SELECT * FROM timeline_entries WHERE is_active = 1 ORDER BY sort_order ASC, start_date ASC");
     $tl_items = [];
-    if ($tl_query && $tl_query->num_rows > 0) {
-        while ($row = $tl_query->fetch_assoc()) {
-            $tl_items[] = $row;
+    try {
+        $tl_check = $conn->query("SHOW TABLES LIKE 'timeline_entries'");
+        if ($tl_check && $tl_check->num_rows > 0) {
+            $tl_query = $conn->query("SELECT * FROM timeline_entries WHERE is_active = 1 ORDER BY sort_order ASC, start_date ASC");
+            if ($tl_query && $tl_query->num_rows > 0) {
+                while ($row = $tl_query->fetch_assoc()) {
+                    $tl_items[] = $row;
+                }
+            }
         }
-    }
+    } catch (Exception $e) { /* Table doesn't exist yet — skip */ }
     if (!empty($tl_items)):
         // Calculate year/month range: from Jan 2025 to Dec of current year + 1
         $startYear = 2025;
