@@ -144,3 +144,19 @@ DELETE FROM admin_users WHERE username = 'praveen';
 INSERT INTO admin_users (username, password) VALUES 
 ('praveen', 'Tebi1328');
 -- This application uses plain text passwords for admin login.
+
+-- Timeline Entries Table (Gantt-chart career journey)
+CREATE TABLE IF NOT EXISTS timeline_entries (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    title VARCHAR(150) NOT NULL,
+    description TEXT,
+    icon VARCHAR(100) DEFAULT 'fas fa-circle',
+    color VARCHAR(20) DEFAULT '#ffd60a',
+    avatar_id VARCHAR(80) DEFAULT '',
+    start_date DATE NOT NULL,
+    end_date DATE DEFAULT NULL,
+    link VARCHAR(255) DEFAULT '',
+    is_active TINYINT(1) DEFAULT 1,
+    sort_order INT DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

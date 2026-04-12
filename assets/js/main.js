@@ -222,4 +222,56 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
+    // ========================================
+    // Timeline: Scroll, Arrows, Drag
+    // ========================================
+    const tlScroll = document.getElementById('tlScrollArea');
+    const tlLeft = document.getElementById('tlArrowLeft');
+    const tlRight = document.getElementById('tlArrowRight');
+
+    if (tlScroll) {
+        const SCROLL_AMOUNT = 240;
+
+        // Arrow buttons
+        if (tlLeft) tlLeft.addEventListener('click', () => {
+            tlScroll.scrollBy({ left: -SCROLL_AMOUNT, behavior: 'smooth' });
+        });
+        if (tlRight) tlRight.addEventListener('click', () => {
+            tlScroll.scrollBy({ left: SCROLL_AMOUNT, behavior: 'smooth' });
+        });
+
+        // Drag to scroll
+        let isDragging = false, startX, scrollLeft;
+        tlScroll.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            startX = e.pageX - tlScroll.offsetLeft;
+            scrollLeft = tlScroll.scrollLeft;
+            tlScroll.style.cursor = 'grabbing';
+        });
+        tlScroll.addEventListener('mouseleave', () => {
+            isDragging = false;
+            tlScroll.style.cursor = 'grab';
+        });
+        tlScroll.addEventListener('mouseup', () => {
+            isDragging = false;
+            tlScroll.style.cursor = 'grab';
+        });
+        tlScroll.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            e.preventDefault();
+            const x = e.pageX - tlScroll.offsetLeft;
+            const walk = (x - startX) * 1.5;
+            tlScroll.scrollLeft = scrollLeft - walk;
+        });
+
+        // Auto-scroll to current month on load
+        const currentMonthEl = tlScroll.querySelector('.tl-current-month');
+        if (currentMonthEl) {
+            setTimeout(() => {
+                const offset = currentMonthEl.offsetLeft - tlScroll.offsetWidth / 2;
+                tlScroll.scrollTo({ left: Math.max(0, offset), behavior: 'smooth' });
+            }, 600);
+        }
+    }
+
 });

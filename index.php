@@ -599,6 +599,145 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['send_message'])) {
         </div>
     </section>
 
+    <!-- Timeline / Journey Section -->
+    <?php
+    $tl_query = $conn->query("SELECT * FROM timeline_entries WHERE is_active = 1 ORDER BY sort_order ASC, start_date ASC");
+    $tl_items = [];
+    if ($tl_query && $tl_query->num_rows > 0) {
+        while ($row = $tl_query->fetch_assoc()) {
+            $tl_items[] = $row;
+        }
+    }
+    if (!empty($tl_items)):
+        // Calculate year/month range: from Jan 2025 to Dec of current year + 1
+        $startYear = 2025;
+        $endYear = (int)date('Y') + 1;
+        $months = [];
+        for ($y = $startYear; $y <= $endYear; $y++) {
+            for ($m = 1; $m <= 12; $m++) {
+                $months[] = ['year' => $y, 'month' => $m, 'key' => $y . '-' . str_pad($m, 2, '0', STR_PAD_LEFT)];
+            }
+        }
+        $totalMonths = count($months);
+    ?>
+    <section id="timeline">
+        <h2 class="fade-in">My Journey</h2>
+        <div class="section-line"></div>
+        <p class="timeline-subtitle fade-in">From <em>"What If?"</em> to <em>"It's Live."</em></p>
+
+        <div class="timeline-wrapper fade-in">
+            <!-- Scroll arrows -->
+            <button class="tl-arrow tl-arrow-left" id="tlArrowLeft" aria-label="Scroll left"><i class="fas fa-chevron-left"></i></button>
+            <button class="tl-arrow tl-arrow-right" id="tlArrowRight" aria-label="Scroll right"><i class="fas fa-chevron-right"></i></button>
+
+            <div class="tl-scroll-area" id="tlScrollArea">
+                <div class="tl-grid" style="grid-template-columns: 220px repeat(<?php echo $totalMonths; ?>, 60px);">
+                    <!-- Header row: Years -->
+                    <div class="tl-corner"></div>
+                    <?php
+                    $prevYear = null;
+                    $yearSpans = [];
+                    foreach ($months as $i => $mo) {
+                        if ($mo['year'] !== $prevYear) {
+                            if ($prevYear !== null) {
+                                $yearSpans[] = ['year' => $prevYear, 'span' => $i - $yearStart];
+                            }
+                            $yearStart = $i;
+                            $prevYear = $mo['year'];
+                        }
+                    }
+                    $yearSpans[] = ['year' => $prevYear, 'span' => $totalMonths - $yearStart];
+                    foreach ($yearSpans as $ys):
+                    ?>
+                    <div class="tl-year-header" style="grid-column: span <?php echo $ys['span']; ?>;">
+                        <?php echo $ys['year']; ?>
+                    </div>
+                    <?php endforeach; ?>
+
+                    <!-- Quarter row -->
+                    <div class="tl-corner tl-corner-sub"></div>
+                    <?php foreach ($months as $mo): ?>
+                    <div class="tl-month-header <?php echo ($mo['year'] == date('Y') && $mo['month'] == date('n')) ? 'tl-current-month' : ''; ?>">
+                        <?php echo date('M', mktime(0, 0, 0, $mo['month'], 1)); ?>
+                    </div>
+                    <?php endforeach; ?>
+
+                    <!-- Data rows -->
+                    <?php foreach ($tl_items as $idx => $item):
+                        // Build avatar URL
+                        $av_url = '';
+                        if (!empty($item['avatar_id'])) {
+                            $parts = explode('-', $item['avatar_id']);
+                            $gender = $parts[0] ?? 'm';
+                            $num = $parts[1] ?? 1;
+                            $seed_prefix = $gender === 'f' ? 'female-avatar-' : 'male-avatar-';
+                            $av_url = "https://api.dicebear.com/7.x/adventurer/svg?seed={$seed_prefix}{$num}&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf";
+                        }
+
+                        // Calculate start/end column positions
+                        $sDate = new DateTime($item['start_date']);
+                        $eDate = $item['end_date'] ? new DateTime($item['end_date']) : new DateTime();
+                        $sKey = $sDate->format('Y') . '-' . $sDate->format('m');
+                        $eKey = $eDate->format('Y') . '-' . $eDate->format('m');
+
+                        $startCol = -1;
+                        $endCol = -1;
+                        foreach ($months as $mi => $mo) {
+                            if ($mo['key'] === $sKey) $startCol = $mi;
+                            if ($mo['key'] === $eKey) $endCol = $mi;
+                        }
+                        if ($startCol < 0) $startCol = 0;
+                        if ($endCol < 0) $endCol = $totalMonths - 1;
+                        if ($endCol < $startCol) $endCol = $startCol;
+                        $barSpan = $endCol - $startCol + 1;
+                    ?>
+                    <!-- Label cell -->
+                    <div class="tl-label">
+                        <?php if ($av_url): ?>
+                            <img src="<?php echo $av_url; ?>" class="tl-label-avatar" alt="<?php echo htmlspecialchars($item['title']); ?>">
+                        <?php else: ?>
+                            <div class="tl-label-icon" style="color:<?php echo htmlspecialchars($item['color']); ?>;"><i class="<?php echo htmlspecialchars($item['icon']); ?>"></i></div>
+                        <?php endif; ?>
+                        <div class="tl-label-text">
+                            <?php if (!empty($item['link'])): ?>
+                                <a href="<?php echo htmlspecialchars($item['link']); ?>" target="_blank"><?php echo htmlspecialchars($item['title']); ?></a>
+                            <?php else: ?>
+                                <span><?php echo htmlspecialchars($item['title']); ?></span>
+                            <?php endif; ?>
+                            <?php if (!empty($item['description'])): ?>
+                                <small><?php echo htmlspecialchars($item['description']); ?></small>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+
+                    <!-- Empty cells before bar -->
+                    <?php if ($startCol > 0): ?>
+                    <div class="tl-empty" style="grid-column: span <?php echo $startCol; ?>;"></div>
+                    <?php endif; ?>
+
+                    <!-- Bar cell -->
+                    <div class="tl-bar" style="grid-column: span <?php echo $barSpan; ?>; --bar-color: <?php echo htmlspecialchars($item['color']); ?>;">
+                        <div class="tl-bar-fill">
+                            <?php if ($av_url): ?>
+                                <img src="<?php echo $av_url; ?>" class="tl-bar-avatar" alt="">
+                            <?php endif; ?>
+                        </div>
+                    </div>
+
+                    <!-- Empty cells after bar -->
+                    <?php
+                    $afterCols = $totalMonths - $endCol - 1;
+                    if ($afterCols > 0): ?>
+                    <div class="tl-empty" style="grid-column: span <?php echo $afterCols; ?>;"></div>
+                    <?php endif; ?>
+
+                    <?php endforeach; ?>
+                </div>
+            </div>
+        </div>
+    </section>
+    <?php endif; ?>
+
     <!-- Contact Section -->
     <section id="contact">
         <h2 class="fade-in">Let's Work Together</h2>

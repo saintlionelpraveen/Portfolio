@@ -285,6 +285,24 @@ foreach (['job_title VARCHAR(100)', 'location VARCHAR(100)', 'years_exp INT DEFA
     }
 }
 
+// --- AUTO-MIGRATION: timeline_entries table ---
+$conn->query("
+    CREATE TABLE IF NOT EXISTS timeline_entries (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        title VARCHAR(150) NOT NULL,
+        description TEXT,
+        icon VARCHAR(100) DEFAULT 'fas fa-circle',
+        color VARCHAR(20) DEFAULT '#ffd60a',
+        avatar_id VARCHAR(80) DEFAULT '',
+        start_date DATE NOT NULL,
+        end_date DATE DEFAULT NULL,
+        link VARCHAR(255) DEFAULT '',
+        is_active TINYINT(1) DEFAULT 1,
+        sort_order INT DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+");
+
 // Handle Form Submissions
 $message = "";
 $error = "";
@@ -694,7 +712,7 @@ if (isset($_POST['add_social'])) {
         }
     }
     if (empty($error)) {
-        $stmt = $conn->prepare("INSERT INTO social_links (platform, url, icon, logo_image) VALUES (?, ?, ?, ?)");
+        $stmt = $conn->prepare("INSERT INTO social_links (platform, url, icon_class, logo_image) VALUES (?, ?, ?, ?)");
         $stmt->bind_param("ssss", $platform, $url, $icon, $logo_path);
         if ($stmt->execute()) {
             $message = "Social link added.";
@@ -727,7 +745,7 @@ if (isset($_POST['update_social'])) {
         }
     }
     if (empty($error)) {
-        $conn->query("UPDATE social_links SET platform='$platform', url='$url', icon='$icon'$logo_sql WHERE id=$id");
+        $conn->query("UPDATE social_links SET platform='$platform', url='$url', icon_class='$icon'$logo_sql WHERE id=$id");
         $message = "Social link updated.";
     }
 }
@@ -768,6 +786,58 @@ if (isset($_POST['update_admin_profile'])) {
         } else {
             $error = "Error updating profile.";
         }
+    }
+}
+
+// --- TIMELINE ENTRY ADD ---
+if (isset($_POST['add_timeline'])) {
+    $title = clean_input($_POST['tl_title']);
+    $desc = clean_input($_POST['tl_description'] ?? '');
+    $icon = clean_input($_POST['tl_icon'] ?? 'fas fa-circle');
+    $color = clean_input($_POST['tl_color'] ?? '#ffd60a');
+    $avatar_id = clean_input($_POST['tl_avatar_id'] ?? '');
+    $start = clean_input($_POST['tl_start_date']);
+    $end = !empty($_POST['tl_end_date']) ? clean_input($_POST['tl_end_date']) : null;
+    $link = clean_input($_POST['tl_link'] ?? '');
+    $is_active = isset($_POST['tl_is_active']) ? 1 : 0;
+    $sort = (int) ($_POST['tl_sort_order'] ?? 0);
+
+    $stmt = $conn->prepare("INSERT INTO timeline_entries (title, description, icon, color, avatar_id, start_date, end_date, link, is_active, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    $stmt->bind_param("ssssssssii", $title, $desc, $icon, $color, $avatar_id, $start, $end, $link, $is_active, $sort);
+    if ($stmt->execute()) {
+        $message = "Timeline entry added.";
+    } else {
+        $error = "Error adding timeline entry.";
+    }
+}
+
+// --- TIMELINE ENTRY DELETE ---
+if (isset($_GET['delete_timeline'])) {
+    $id = (int) $_GET['delete_timeline'];
+    $conn->query("DELETE FROM timeline_entries WHERE id=$id");
+    $message = "Timeline entry deleted.";
+}
+
+// --- TIMELINE ENTRY UPDATE ---
+if (isset($_POST['update_timeline'])) {
+    $id = (int) $_POST['edit_tl_id'];
+    $title = clean_input($_POST['edit_tl_title']);
+    $desc = clean_input($_POST['edit_tl_description'] ?? '');
+    $icon = clean_input($_POST['edit_tl_icon'] ?? 'fas fa-circle');
+    $color = clean_input($_POST['edit_tl_color'] ?? '#ffd60a');
+    $avatar_id = clean_input($_POST['edit_tl_avatar_id'] ?? '');
+    $start = clean_input($_POST['edit_tl_start_date']);
+    $end = !empty($_POST['edit_tl_end_date']) ? clean_input($_POST['edit_tl_end_date']) : null;
+    $link = clean_input($_POST['edit_tl_link'] ?? '');
+    $is_active = isset($_POST['edit_tl_is_active']) ? 1 : 0;
+    $sort = (int) ($_POST['edit_tl_sort_order'] ?? 0);
+
+    $stmt = $conn->prepare("UPDATE timeline_entries SET title=?, description=?, icon=?, color=?, avatar_id=?, start_date=?, end_date=?, link=?, is_active=?, sort_order=? WHERE id=?");
+    $stmt->bind_param("ssssssssiii", $title, $desc, $icon, $color, $avatar_id, $start, $end, $link, $is_active, $sort, $id);
+    if ($stmt->execute()) {
+        $message = "Timeline entry updated.";
+    } else {
+        $error = "Error updating timeline entry.";
     }
 }
 
@@ -850,6 +920,8 @@ $active_tab = isset($_GET['tab']) ? $_GET['tab'] : 'hero';
                         class="fas fa-briefcase"></i> Projects</a></li>
             <li><a href="?tab=internships" class="<?php echo $active_tab == 'internships' ? 'active' : ''; ?>"><i
                         class="fas fa-graduation-cap"></i> Experience</a></li>
+            <li><a href="?tab=timeline" class="<?php echo $active_tab == 'timeline' ? 'active' : ''; ?>"><i
+                        class="fas fa-stream"></i> Timeline</a></li>
             <li class="nav-section-label">Settings</li>
             <li><a href="?tab=settings" class="<?php echo $active_tab == 'settings' ? 'active' : ''; ?>"><i
                         class="fas fa-cogs"></i> General Settings</a></li>
@@ -876,6 +948,7 @@ $active_tab = isset($_GET['tab']) ? $_GET['tab'] : 'hero';
                     'skills' => 'My Skills',
                     'projects' => 'Projects',
                     'internships' => 'Experience & Fellowship',
+                    'timeline' => 'Career Timeline',
                     'settings' => 'General Settings',
                     'social' => 'Social Links',
                     'profile' => 'Profile'
@@ -1842,6 +1915,190 @@ $active_tab = isset($_GET['tab']) ? $_GET['tab'] : 'hero';
                 </div>
         <?php endif; ?>
 
+        <?php if ($active_tab == 'timeline'): ?>
+            <?php
+            $timeline_entries = $conn->query("SELECT * FROM timeline_entries ORDER BY sort_order ASC, start_date DESC");
+            // DiceBear avatar seeds — 50 male, 50 female, cute styles
+            $avatar_styles = ['adventurer'];
+            $male_seeds = [];
+            $female_seeds = [];
+            for ($i = 1; $i <= 50; $i++) {
+                $male_seeds[] = "male-avatar-" . $i;
+                $female_seeds[] = "female-avatar-" . $i;
+            }
+            ?>
+            <div class="admin-card fade-in">
+                <h2><i class="fas fa-stream"></i> Add Timeline Entry</h2>
+                <form method="POST">
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+                        <div class="form-group">
+                            <label>Title <span style="color:red">*</span></label>
+                            <input type="text" name="tl_title" placeholder="e.g. Started at TinkerHub" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Icon Class (FontAwesome)</label>
+                            <input type="text" name="tl_icon" value="fas fa-circle" placeholder="fas fa-rocket">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Description</label>
+                        <textarea name="tl_description" rows="2" placeholder="Brief description of this timeline event"></textarea>
+                    </div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;">
+                        <div class="form-group">
+                            <label>Start Date <span style="color:red">*</span></label>
+                            <input type="date" name="tl_start_date" required>
+                        </div>
+                        <div class="form-group">
+                            <label>End Date <small style="color:#999">(leave empty = ongoing)</small></label>
+                            <input type="date" name="tl_end_date">
+                        </div>
+                        <div class="form-group">
+                            <label>Bar Color</label>
+                            <div style="display:flex;gap:0.5rem;align-items:center;">
+                                <input type="color" name="tl_color" value="#ffd60a" style="width:50px;height:36px;border:1px solid #ddd;border-radius:4px;cursor:pointer;">
+                                <span style="color:#999;font-size:0.8rem;">Pick accent</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+                        <div class="form-group">
+                            <label>Link (optional)</label>
+                            <input type="url" name="tl_link" placeholder="https://example.com">
+                        </div>
+                        <div class="form-group">
+                            <label>Sort Order</label>
+                            <input type="number" name="tl_sort_order" value="0" min="0">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label style="margin-bottom:0.5rem;display:block;">Choose Avatar</label>
+                        <input type="hidden" name="tl_avatar_id" id="tl_avatar_id" value="">
+                        <div style="display:flex;gap:0.3rem;align-items:center;margin-bottom:0.5rem;">
+                            <button type="button" class="btn-sm" onclick="showAvatarGender('male')" style="padding:0.3rem 0.8rem;font-size:0.75rem;background:#e0e7ff;color:#3730a3;border:1px solid #c7d2fe;border-radius:4px;cursor:pointer;">👨 Male</button>
+                            <button type="button" class="btn-sm" onclick="showAvatarGender('female')" style="padding:0.3rem 0.8rem;font-size:0.75rem;background:#fce7f3;color:#be185d;border:1px solid #fbcfe8;border-radius:4px;cursor:pointer;">👩 Female</button>
+                            <span id="selectedAvatarLabel" style="margin-left:auto;font-size:0.75rem;color:#999;">None selected</span>
+                        </div>
+                        <div id="avatarGridMale" style="display:grid;grid-template-columns:repeat(10,1fr);gap:0.4rem;max-height:200px;overflow-y:auto;border:1px solid #e5e7eb;border-radius:6px;padding:0.5rem;background:#f9fafb;">
+                            <?php foreach ($male_seeds as $idx => $seed): ?>
+                            <div class="avatar-pick" data-avatar="m-<?php echo $idx+1; ?>" onclick="pickAvatar(this, 'tl_avatar_id')"
+                                 style="cursor:pointer;border-radius:50%;border:2px solid transparent;padding:2px;transition:all 0.2s;">
+                                <img src="https://api.dicebear.com/7.x/adventurer/svg?seed=<?php echo $seed; ?>&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf"
+                                     style="width:100%;border-radius:50%;" alt="Male <?php echo $idx+1; ?>" loading="lazy">
+                            </div>
+                            <?php endforeach; ?>
+                        </div>
+                        <div id="avatarGridFemale" style="display:none;grid-template-columns:repeat(10,1fr);gap:0.4rem;max-height:200px;overflow-y:auto;border:1px solid #e5e7eb;border-radius:6px;padding:0.5rem;background:#f9fafb;">
+                            <?php foreach ($female_seeds as $idx => $seed): ?>
+                            <div class="avatar-pick" data-avatar="f-<?php echo $idx+1; ?>" onclick="pickAvatar(this, 'tl_avatar_id')"
+                                 style="cursor:pointer;border-radius:50%;border:2px solid transparent;padding:2px;transition:all 0.2s;">
+                                <img src="https://api.dicebear.com/7.x/adventurer/svg?seed=<?php echo $seed; ?>&backgroundColor=ffd5dc,ffdfbf,c0aede,b6e3f4,d1d4f9"
+                                     style="width:100%;border-radius:50%;" alt="Female <?php echo $idx+1; ?>" loading="lazy">
+                            </div>
+                            <?php endforeach; ?>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;">
+                            <input type="checkbox" name="tl_is_active" checked style="width:16px;height:16px;"> Show on website
+                        </label>
+                    </div>
+                    <button type="submit" name="add_timeline" class="btn-primary"><i class="fas fa-plus"></i> Add Entry</button>
+                </form>
+            </div>
+
+            <!-- Existing entries table -->
+            <div class="admin-card fade-in">
+                <h2><i class="fas fa-list"></i> Timeline Entries</h2>
+                <?php if ($timeline_entries && $timeline_entries->num_rows > 0): ?>
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Avatar</th>
+                                <th>Title</th>
+                                <th>Duration</th>
+                                <th>Color</th>
+                                <th>Active</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php while ($tl = $timeline_entries->fetch_assoc()):
+                                // Build avatar URL from avatar_id
+                                $av_url = '';
+                                if (!empty($tl['avatar_id'])) {
+                                    $parts = explode('-', $tl['avatar_id']);
+                                    $gender = $parts[0] ?? 'm';
+                                    $num = $parts[1] ?? 1;
+                                    $seed_prefix = $gender === 'f' ? 'female-avatar-' : 'male-avatar-';
+                                    $av_url = "https://api.dicebear.com/7.x/adventurer/svg?seed={$seed_prefix}{$num}&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf";
+                                }
+                            ?>
+                            <tr>
+                                <td>
+                                    <?php if ($av_url): ?>
+                                        <img src="<?php echo $av_url; ?>" style="width:36px;height:36px;border-radius:50%;border:2px solid <?php echo htmlspecialchars($tl['color']); ?>;">
+                                    <?php else: ?>
+                                        <i class="<?php echo htmlspecialchars($tl['icon']); ?>" style="font-size:1.2rem;color:<?php echo htmlspecialchars($tl['color']); ?>;"></i>
+                                    <?php endif; ?>
+                                </td>
+                                <td>
+                                    <strong><?php echo htmlspecialchars($tl['title']); ?></strong>
+                                    <?php if ($tl['description']): ?>
+                                    <br><small style="color:#999;"><?php echo htmlspecialchars(substr($tl['description'], 0, 60)); ?>…</small>
+                                    <?php endif; ?>
+                                </td>
+                                <td style="white-space:nowrap;font-size:0.82rem;">
+                                    <?php echo date('M Y', strtotime($tl['start_date'])); ?> →
+                                    <?php echo $tl['end_date'] ? date('M Y', strtotime($tl['end_date'])) : '<span style="color:#22c55e;">Present</span>'; ?>
+                                </td>
+                                <td><span style="display:inline-block;width:20px;height:20px;background:<?php echo htmlspecialchars($tl['color']); ?>;border-radius:3px;border:1px solid rgba(0,0,0,0.1);"></span></td>
+                                <td><?php echo $tl['is_active'] ? '✅' : '❌'; ?></td>
+                                <td style="white-space:nowrap;">
+                                    <button type="button" onclick="toggleEditRow('editTL<?php echo $tl['id']; ?>')" class="btn-sm" style="background:#eef2ff;color:#4338ca;padding:0.3rem 0.6rem;border:none;border-radius:4px;cursor:pointer;font-size:0.75rem;"><i class="fas fa-edit"></i></button>
+                                    <a href="?tab=timeline&delete_timeline=<?php echo $tl['id']; ?>" onclick="return confirm('Delete this entry?')" class="btn-sm" style="background:#fef2f2;color:#dc2626;padding:0.3rem 0.6rem;border:none;border-radius:4px;text-decoration:none;font-size:0.75rem;"><i class="fas fa-trash"></i></a>
+                                </td>
+                            </tr>
+                            <!-- Inline edit row -->
+                            <tr id="editTL<?php echo $tl['id']; ?>" style="display:none;">
+                                <td colspan="6" style="padding:1rem;background:#f8fafc;">
+                                    <form method="POST">
+                                        <input type="hidden" name="edit_tl_id" value="<?php echo $tl['id']; ?>">
+                                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.8rem;">
+                                            <div class="form-group"><label>Title</label><input type="text" name="edit_tl_title" value="<?php echo htmlspecialchars($tl['title']); ?>" required></div>
+                                            <div class="form-group"><label>Icon</label><input type="text" name="edit_tl_icon" value="<?php echo htmlspecialchars($tl['icon']); ?>"></div>
+                                        </div>
+                                        <div class="form-group"><label>Description</label><textarea name="edit_tl_description" rows="2"><?php echo htmlspecialchars($tl['description'] ?? ''); ?></textarea></div>
+                                        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.8rem;">
+                                            <div class="form-group"><label>Start Date</label><input type="date" name="edit_tl_start_date" value="<?php echo $tl['start_date']; ?>" required></div>
+                                            <div class="form-group"><label>End Date</label><input type="date" name="edit_tl_end_date" value="<?php echo $tl['end_date'] ?? ''; ?>"></div>
+                                            <div class="form-group"><label>Color</label><input type="color" name="edit_tl_color" value="<?php echo htmlspecialchars($tl['color']); ?>" style="width:50px;height:36px;"></div>
+                                        </div>
+                                        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.8rem;">
+                                            <div class="form-group"><label>Link</label><input type="url" name="edit_tl_link" value="<?php echo htmlspecialchars($tl['link'] ?? ''); ?>"></div>
+                                            <div class="form-group"><label>Sort Order</label><input type="number" name="edit_tl_sort_order" value="<?php echo $tl['sort_order']; ?>"></div>
+                                            <div class="form-group"><label>Avatar ID</label><input type="text" name="edit_tl_avatar_id" value="<?php echo htmlspecialchars($tl['avatar_id'] ?? ''); ?>" placeholder="e.g. m-3 or f-12"></div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;">
+                                                <input type="checkbox" name="edit_tl_is_active" <?php echo $tl['is_active'] ? 'checked' : ''; ?> style="width:16px;height:16px;"> Show on website
+                                            </label>
+                                        </div>
+                                        <button type="submit" name="update_timeline" class="btn-primary" style="font-size:0.85rem;"><i class="fas fa-save"></i> Save Changes</button>
+                                    </form>
+                                </td>
+                            </tr>
+                            <?php endwhile; ?>
+                        </tbody>
+                    </table>
+                </div>
+                <?php else: ?>
+                    <p style="text-align:center;color:#999;padding:2rem;">No timeline entries yet. Add your first one above!</p>
+                <?php endif; ?>
+            </div>
+        <?php endif; ?>
+
         <?php if ($active_tab == 'profile'): ?>
                 <div class="admin-card fade-in">
                     <h2><i class="fas fa-id-card"></i> Manage Admin Profile</h2>
@@ -1963,6 +2220,36 @@ $active_tab = isset($_GET['tab']) ? $_GET['tab'] : 'hero';
             if (!row) return;
             const isHidden = row.style.display === 'none' || row.style.display === '';
             row.style.display = isHidden ? (row.tagName === 'TR' ? 'table-row' : 'block') : 'none';
+        }
+
+        // Avatar picker functions
+        function showAvatarGender(gender) {
+            const maleGrid = document.getElementById('avatarGridMale');
+            const femaleGrid = document.getElementById('avatarGridFemale');
+            if (!maleGrid || !femaleGrid) return;
+            if (gender === 'male') {
+                maleGrid.style.display = 'grid';
+                femaleGrid.style.display = 'none';
+            } else {
+                maleGrid.style.display = 'none';
+                femaleGrid.style.display = 'grid';
+            }
+        }
+
+        function pickAvatar(el, inputId) {
+            // Remove previous selection
+            document.querySelectorAll('.avatar-pick').forEach(a => {
+                a.style.borderColor = 'transparent';
+                a.style.transform = 'scale(1)';
+            });
+            // Highlight selected
+            el.style.borderColor = '#ffd60a';
+            el.style.transform = 'scale(1.15)';
+            // Set hidden input value
+            const avatarId = el.dataset.avatar;
+            document.getElementById(inputId).value = avatarId;
+            const label = document.getElementById('selectedAvatarLabel');
+            if (label) label.textContent = '✓ Avatar ' + avatarId + ' selected';
         }
     </script>
 </body>

@@ -1645,6 +1645,259 @@ footer p {
 }
 
 /* ============================================================
+   TIMELINE / GANTT-CHART SECTION
+   ============================================================ */
+.timeline-subtitle {
+    text-align: center;
+    font-family: 'Playfair Display', serif;
+    font-size: 1.6rem;
+    color: var(--text-primary);
+    margin-bottom: 3rem;
+    font-weight: 400;
+}
+
+.timeline-subtitle em {
+    font-style: italic;
+    color: var(--accent-lime);
+}
+
+.timeline-wrapper {
+    position: relative;
+    max-width: 1400px;
+    margin: 0 auto;
+    border: 2px solid var(--text-primary);
+    background: var(--bg-white);
+    box-shadow: 6px 6px 0 var(--accent-yellow);
+    overflow: hidden;
+}
+
+/* Scroll arrows */
+.tl-arrow {
+    position: absolute;
+    top: 10px;
+    z-index: 10;
+    width: 32px;
+    height: 32px;
+    border: 2px solid var(--text-primary);
+    background: var(--bg-white);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    color: var(--text-primary);
+    transition: all 0.2s;
+    border-radius: 0;
+}
+
+.tl-arrow:hover {
+    background: var(--accent-yellow);
+    transform: scale(1.05);
+}
+
+.tl-arrow-left { right: 44px; }
+.tl-arrow-right { right: 8px; }
+
+/* Scrollable area */
+.tl-scroll-area {
+    overflow-x: auto;
+    overflow-y: hidden;
+    cursor: grab;
+    scrollbar-width: thin;
+    scrollbar-color: var(--text-muted) var(--bg-primary);
+}
+
+.tl-scroll-area:active { cursor: grabbing; }
+
+.tl-scroll-area::-webkit-scrollbar { height: 6px; }
+.tl-scroll-area::-webkit-scrollbar-track { background: var(--bg-primary); }
+.tl-scroll-area::-webkit-scrollbar-thumb { background: var(--text-muted); }
+
+/* Grid layout */
+.tl-grid {
+    display: grid;
+    min-width: max-content;
+}
+
+/* Corner cells */
+.tl-corner {
+    background: var(--bg-primary);
+    border-bottom: 1px solid var(--border-color);
+    border-right: 2px solid var(--text-primary);
+    padding: 0.5rem;
+    position: sticky;
+    left: 0;
+    z-index: 5;
+}
+
+.tl-corner-sub {
+    border-bottom: 2px solid var(--text-primary);
+}
+
+/* Year headers */
+.tl-year-header {
+    background: var(--bg-primary);
+    border-bottom: 1px solid var(--border-color);
+    padding: 0.5rem;
+    text-align: center;
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 1rem;
+    color: var(--text-primary);
+    border-right: 1px solid var(--border-color);
+    letter-spacing: 1px;
+}
+
+/* Month headers */
+.tl-month-header {
+    background: var(--bg-primary);
+    border-bottom: 2px solid var(--text-primary);
+    border-right: 1px solid rgba(0,0,0,0.05);
+    padding: 0.3rem 0.2rem;
+    text-align: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.6rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.tl-current-month {
+    background: var(--accent-yellow);
+    color: var(--text-primary);
+    font-weight: 800;
+}
+
+/* Label cells (left column) */
+.tl-label {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    padding: 0.8rem 1rem;
+    border-bottom: 1px dashed var(--border-color);
+    border-right: 2px solid var(--text-primary);
+    background: var(--bg-white);
+    position: sticky;
+    left: 0;
+    z-index: 4;
+    min-width: 220px;
+}
+
+.tl-label-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 2px solid var(--border-color);
+    flex-shrink: 0;
+    object-fit: cover;
+    background: var(--bg-primary);
+}
+
+.tl-label-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-primary);
+    border: 2px solid var(--border-color);
+    flex-shrink: 0;
+    font-size: 0.9rem;
+}
+
+.tl-label-text {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.tl-label-text span,
+.tl-label-text a {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-decoration: none;
+}
+
+.tl-label-text a:hover {
+    color: var(--accent-lime);
+    text-decoration: underline;
+}
+
+.tl-label-text small {
+    font-size: 0.68rem;
+    color: var(--text-muted);
+    font-weight: 400;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Empty/spacing cells */
+.tl-empty {
+    border-bottom: 1px dashed rgba(0,0,0,0.04);
+    border-right: 1px solid rgba(0,0,0,0.03);
+}
+
+/* Bar cells */
+.tl-bar {
+    display: flex;
+    align-items: center;
+    padding: 0.6rem 0;
+    border-bottom: 1px dashed rgba(0,0,0,0.04);
+}
+
+.tl-bar-fill {
+    width: 100%;
+    height: 28px;
+    background: var(--bar-color, #ffd60a);
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding-right: 4px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    transition: transform 0.2s, box-shadow 0.2s;
+    position: relative;
+    overflow: visible;
+}
+
+.tl-bar-fill:hover {
+    transform: scaleY(1.15);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+}
+
+.tl-bar-avatar {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: 2px solid rgba(255,255,255,0.8);
+    object-fit: cover;
+    background: var(--bg-white);
+    flex-shrink: 0;
+    margin-left: -4px;
+}
+
+.tl-bar-avatar:first-child { margin-left: 0; }
+
+/* Responsive timeline */
+@media (max-width: 768px) {
+    .tl-label { min-width: 150px; padding: 0.6rem 0.5rem; }
+    .tl-label-avatar { width: 28px; height: 28px; }
+    .tl-label-text span, .tl-label-text a { font-size: 0.72rem; }
+    .tl-bar-fill { height: 22px; }
+    .tl-bar-avatar { width: 18px; height: 18px; }
+    .tl-year-header { font-size: 0.8rem; }
+    .timeline-subtitle { font-size: 1.2rem; }
+}
+
+/* ============================================================
    SCROLLBAR — Minimal
    ============================================================ */
 ::-webkit-scrollbar { width: 6px; }
