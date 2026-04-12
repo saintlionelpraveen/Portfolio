@@ -285,7 +285,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['send_message'])) {
 
     <!-- Fellowship Section -->
     <section id="fellowship">
-        <h2 class="fade-in">Fellowship <span style="color:var(--accent-cyan)">&amp; Experience</span></h2>
+        <h2 class="fade-in">Fellowship <span style="color:var(--accent-lime)">&amp; Experience</span></h2>
         <div class="section-line"></div>
 
         <?php if (!empty($internships)):
@@ -721,8 +721,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['send_message'])) {
 
     <footer class="fade-in">
         <center>
-            <h1 class="logo" style="margin-bottom: 1rem; display: inline-block;"><span style="color: var(--accent-green);">~/</span>Praveen.Y</h1>
-            <p>&copy; <?php echo date('Y'); ?> | Built with <i class="fas fa-dharmachakra" style="color: var(--accent-cyan); font-size: 0.85rem;"></i> &amp; <i class="fas fa-code-branch" style="color: var(--accent-green); font-size: 0.85rem;"></i></p>
+            <h1 class="logo" style="margin-bottom: 1rem; display: inline-block;">Praveen.Y</h1>
+            <p>&copy; <?php echo date('Y'); ?> &mdash; Built with <i class="fas fa-dharmachakra" style="color: var(--text-primary); font-size: 0.85rem;"></i> &amp; <i class="fas fa-code-branch" style="color: var(--accent-lime); font-size: 0.85rem;"></i></p>
         </center>
     </footer>
 
