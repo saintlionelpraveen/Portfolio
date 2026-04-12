@@ -1,9 +1,9 @@
-// assets/js/main.js — DevOps Professional Theme
+// assets/js/main.js — TinkerHub-Inspired Editorial Theme
 
 document.addEventListener('DOMContentLoaded', () => {
 
     // ========================================
-    // Navbar Scroll Effect with Glow
+    // Navbar Scroll Effect
     // ========================================
     const nav = document.querySelector('nav');
     window.addEventListener('scroll', () => {
@@ -37,7 +37,7 @@ document.addEventListener('DOMContentLoaded', () => {
             entries.forEach(entry => {
                 if (entry.isIntersecting) {
                     document.querySelectorAll('.skill-card').forEach((card, i) => {
-                        setTimeout(() => card.classList.add('visible'), i * 100);
+                        setTimeout(() => card.classList.add('visible'), i * 120);
                     });
                     skillsObserver.disconnect();
                 }
@@ -83,7 +83,8 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // ========================================
-    // Matrix/Particle Rain — Hero Background
+    // Floating dot grid particles — TinkerHub-style
+    // Subtle background dots in hero area
     // ========================================
     const heroSection = document.querySelector('.hero');
     if (heroSection) {
@@ -94,81 +95,85 @@ document.addEventListener('DOMContentLoaded', () => {
         heroSection.insertBefore(canvas, heroSection.firstChild);
 
         const ctx = canvas.getContext('2d');
-        let particles = [];
-        const CHARS = '01αβγδ{}[]<>/=;:$#@%&*+~_|';
-        const MAX_PARTICLES = 35;
+        let dots = [];
+        const DOT_COUNT = 40;
 
         function resizeCanvas() {
             canvas.width = heroSection.offsetWidth;
             canvas.height = heroSection.offsetHeight;
         }
 
-        function createParticle() {
-            return {
-                x: Math.random() * canvas.width,
-                y: Math.random() * -canvas.height,
-                speed: 0.3 + Math.random() * 0.8,
-                char: CHARS[Math.floor(Math.random() * CHARS.length)],
-                opacity: 0.03 + Math.random() * 0.08,
-                size: 10 + Math.random() * 6
-            };
-        }
-
-        function initParticles() {
-            particles = [];
-            for (let i = 0; i < MAX_PARTICLES; i++) {
-                const p = createParticle();
-                p.y = Math.random() * canvas.height;
-                particles.push(p);
+        function initDots() {
+            dots = [];
+            for (let i = 0; i < DOT_COUNT; i++) {
+                dots.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    vx: (Math.random() - 0.5) * 0.3,
+                    vy: (Math.random() - 0.5) * 0.3,
+                    r: 1.5 + Math.random() * 2,
+                    opacity: 0.06 + Math.random() * 0.08
+                });
             }
         }
 
-        function drawParticles() {
+        function drawDots() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.font = '14px "JetBrains Mono", monospace';
+            dots.forEach(d => {
+                ctx.beginPath();
+                ctx.arc(d.x, d.y, d.r, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(17, 17, 17, ${d.opacity})`;
+                ctx.fill();
 
-            particles.forEach(p => {
-                ctx.fillStyle = `rgba(0, 212, 255, ${p.opacity})`;
-                ctx.font = `${p.size}px "JetBrains Mono", monospace`;
-                ctx.fillText(p.char, p.x, p.y);
-                p.y += p.speed;
+                d.x += d.vx;
+                d.y += d.vy;
 
-                if (p.y > canvas.height + 20) {
-                    p.y = -20;
-                    p.x = Math.random() * canvas.width;
-                    p.char = CHARS[Math.floor(Math.random() * CHARS.length)];
-                }
+                if (d.x < 0 || d.x > canvas.width) d.vx *= -1;
+                if (d.y < 0 || d.y > canvas.height) d.vy *= -1;
             });
 
-            requestAnimationFrame(drawParticles);
+            // Draw faint connecting lines between close dots
+            for (let i = 0; i < dots.length; i++) {
+                for (let j = i + 1; j < dots.length; j++) {
+                    const dx = dots[i].x - dots[j].x;
+                    const dy = dots[i].y - dots[j].y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    if (dist < 120) {
+                        ctx.beginPath();
+                        ctx.moveTo(dots[i].x, dots[i].y);
+                        ctx.lineTo(dots[j].x, dots[j].y);
+                        ctx.strokeStyle = `rgba(17, 17, 17, ${0.03 * (1 - dist / 120)})`;
+                        ctx.lineWidth = 0.5;
+                        ctx.stroke();
+                    }
+                }
+            }
+
+            requestAnimationFrame(drawDots);
         }
 
         resizeCanvas();
-        initParticles();
-        drawParticles();
+        initDots();
+        drawDots();
 
-        // Debounced resize
         let resizeTimer;
         window.addEventListener('resize', () => {
             clearTimeout(resizeTimer);
             resizeTimer = setTimeout(() => {
                 resizeCanvas();
-                initParticles();
+                initDots();
             }, 200);
         });
     }
 
     // ========================================
-    // Parallax for Floating Elements
+    // Parallax for Floating Badges (subtle)
     // ========================================
     document.addEventListener('mousemove', (e) => {
-        const mouseX = e.clientX / window.innerWidth;
-        const mouseY = e.clientY / window.innerHeight;
-
         document.querySelectorAll('.floating-badge').forEach((badge, i) => {
-            const speed = 8 + i * 4;
-            const x = (0.5 - mouseX) * speed;
-            const y = (0.5 - mouseY) * speed;
+            const speed = 6 + i * 3;
+            const x = (0.5 - e.clientX / window.innerWidth) * speed;
+            const y = (0.5 - e.clientY / window.innerHeight) * speed;
             badge.style.transform = `translate(${x}px, ${y}px)`;
         });
     });
@@ -207,5 +212,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
         counters.forEach(c => counterObserver.observe(c));
     }
+
+    // ========================================
+    // Tilt effect on cards (TinkerHub scrapbook)
+    // ========================================
+    document.querySelectorAll('.project-card, .skill-card').forEach(card => {
+        card.addEventListener('mouseenter', () => {
+            card.style.transition = 'transform 0.3s, box-shadow 0.3s';
+        });
+    });
 
 });
