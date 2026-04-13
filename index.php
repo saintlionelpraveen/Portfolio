@@ -754,15 +754,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['send_message'])) {
                         if ($endCol < 0) $endCol = $totalMonths - 1;
                         if ($endCol < $startCol) $endCol = $startCol;
                         $barSpan = $endCol - $startCol + 1;
+                        $rowClass = ($idx % 2 === 0) ? 'tl-row-even' : 'tl-row-odd';
                     ?>
                     <!-- Label cell -->
-                    <div class="tl-label" data-dates="<?php echo htmlspecialchars($startDateFormatted . ' — ' . $endDateFormatted); ?>">
+                    <div class="tl-label <?php echo $rowClass; ?>">
                         <?php if ($display_type === 'avatar' && !empty($avatar_urls)): ?>
                             <img src="<?php echo $avatar_urls[0]; ?>" class="tl-label-avatar" alt="<?php echo htmlspecialchars($item['title']); ?>">
                         <?php elseif ($display_type === 'image' && !empty($image_paths)): ?>
                             <img src="<?php echo htmlspecialchars($image_paths[0]); ?>" class="tl-label-image" alt="<?php echo htmlspecialchars($item['title']); ?>">
                         <?php else: ?>
-                            <div class="tl-label-icon" style="color:<?php echo htmlspecialchars($item['color']); ?>;">
+                            <div class="tl-label-icon" style="color:<?php echo htmlspecialchars($item['color']); ?>; background-color:<?php echo htmlspecialchars($item['color']); ?>15;">
                                 <i class="<?php echo htmlspecialchars($item['icon']); ?>"></i>
                             </div>
                         <?php endif; ?>
@@ -776,17 +777,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['send_message'])) {
                                 <small><?php echo htmlspecialchars($item['description']); ?></small>
                             <?php endif; ?>
                         </div>
-                        <!-- Hover tooltip for dates -->
-                        <div class="tl-date-tooltip"><em><?php echo htmlspecialchars($startDateFormatted . ' — ' . $endDateFormatted); ?></em></div>
                     </div>
 
                     <!-- Empty cells before bar -->
                     <?php if ($startCol > 0): ?>
-                    <div class="tl-empty" style="grid-column: span <?php echo $startCol; ?>;"></div>
+                    <div class="tl-empty <?php echo $rowClass; ?>" style="grid-column: span <?php echo $startCol; ?>;"></div>
                     <?php endif; ?>
 
                     <!-- Bar cell -->
-                    <div class="tl-bar" style="grid-column: span <?php echo $barSpan; ?>; --bar-color: <?php echo htmlspecialchars($item['color']); ?>;">
+                    <div class="tl-bar <?php echo $rowClass; ?>" style="grid-column: span <?php echo $barSpan; ?>; --bar-color: <?php echo htmlspecialchars($item['color']); ?>;">
                         <div class="tl-bar-fill">
                             <?php if ($display_type === 'avatar' && !empty($avatar_urls)): ?>
                                 <?php foreach ($avatar_urls as $aurl): ?>
@@ -797,6 +796,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['send_message'])) {
                                     <img src="<?php echo htmlspecialchars($ipath); ?>" class="tl-bar-image" alt="">
                                 <?php endforeach; ?>
                             <?php endif; ?>
+                            
+                            <!-- Display date right side on hover -->
+                            <div class="tl-bar-date-hover"><em><?php echo htmlspecialchars($startDateFormatted . ' — ' . $endDateFormatted); ?></em></div>
                         </div>
                     </div>
 
@@ -804,7 +806,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['send_message'])) {
                     <?php
                     $afterCols = $totalMonths - $endCol - 1;
                     if ($afterCols > 0): ?>
-                    <div class="tl-empty" style="grid-column: span <?php echo $afterCols; ?>;"></div>
+                    <div class="tl-empty <?php echo $rowClass; ?>" style="grid-column: span <?php echo $afterCols; ?>;"></div>
                     <?php endif; ?>
 
                     <?php endforeach; ?>
