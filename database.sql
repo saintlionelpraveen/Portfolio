@@ -153,10 +153,34 @@ CREATE TABLE IF NOT EXISTS timeline_entries (
     icon VARCHAR(100) DEFAULT 'fas fa-circle',
     color VARCHAR(20) DEFAULT '#ffd60a',
     avatar_id VARCHAR(80) DEFAULT '',
+    display_type ENUM('icon','avatar','image') DEFAULT 'icon',
     start_date DATE NOT NULL,
     end_date DATE DEFAULT NULL,
     link VARCHAR(255) DEFAULT '',
     is_active TINYINT(1) DEFAULT 1,
     sort_order INT DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Migration: Add display_type column if it doesn't exist
+ALTER TABLE timeline_entries ADD COLUMN IF NOT EXISTS display_type ENUM('icon','avatar','image') DEFAULT 'icon' AFTER avatar_id;
+
+-- Timeline Images (up to 10 per entry)
+CREATE TABLE IF NOT EXISTS timeline_images (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    timeline_entry_id INT NOT NULL,
+    image_path VARCHAR(255) NOT NULL,
+    sort_order INT DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (timeline_entry_id) REFERENCES timeline_entries(id) ON DELETE CASCADE
+);
+
+-- Timeline Avatars (up to 10 per entry)
+CREATE TABLE IF NOT EXISTS timeline_avatars (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    timeline_entry_id INT NOT NULL,
+    avatar_id VARCHAR(80) NOT NULL,
+    sort_order INT DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (timeline_entry_id) REFERENCES timeline_entries(id) ON DELETE CASCADE
 );

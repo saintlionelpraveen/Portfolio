@@ -294,12 +294,42 @@ $conn->query("
         icon VARCHAR(100) DEFAULT 'fas fa-circle',
         color VARCHAR(20) DEFAULT '#ffd60a',
         avatar_id VARCHAR(80) DEFAULT '',
+        display_type ENUM('icon','avatar','image') DEFAULT 'icon',
         start_date DATE NOT NULL,
         end_date DATE DEFAULT NULL,
         link VARCHAR(255) DEFAULT '',
         is_active TINYINT(1) DEFAULT 1,
         sort_order INT DEFAULT 0,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+");
+// Migration: Add display_type column if missing
+$tl_cols = $conn->query("SHOW COLUMNS FROM timeline_entries LIKE 'display_type'");
+if ($tl_cols && $tl_cols->num_rows == 0) {
+    $conn->query("ALTER TABLE timeline_entries ADD COLUMN display_type ENUM('icon','avatar','image') DEFAULT 'icon' AFTER avatar_id");
+}
+
+// --- AUTO-MIGRATION: timeline_images table ---
+$conn->query("
+    CREATE TABLE IF NOT EXISTS timeline_images (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        timeline_entry_id INT NOT NULL,
+        image_path VARCHAR(255) NOT NULL,
+        sort_order INT DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (timeline_entry_id) REFERENCES timeline_entries(id) ON DELETE CASCADE
+    )
+");
+
+// --- AUTO-MIGRATION: timeline_avatars table ---
+$conn->query("
+    CREATE TABLE IF NOT EXISTS timeline_avatars (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        timeline_entry_id INT NOT NULL,
+        avatar_id VARCHAR(80) NOT NULL,
+        sort_order INT DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (timeline_entry_id) REFERENCES timeline_entries(id) ON DELETE CASCADE
     )
 ");
 
@@ -796,15 +826,51 @@ if (isset($_POST['add_timeline'])) {
     $icon = clean_input($_POST['tl_icon'] ?? 'fas fa-circle');
     $color = clean_input($_POST['tl_color'] ?? '#ffd60a');
     $avatar_id = clean_input($_POST['tl_avatar_id'] ?? '');
+    $display_type = clean_input($_POST['tl_display_type'] ?? 'icon');
     $start = clean_input($_POST['tl_start_date']);
     $end = !empty($_POST['tl_end_date']) ? clean_input($_POST['tl_end_date']) : null;
     $link = clean_input($_POST['tl_link'] ?? '');
     $is_active = isset($_POST['tl_is_active']) ? 1 : 0;
     $sort = (int) ($_POST['tl_sort_order'] ?? 0);
 
-    $stmt = $conn->prepare("INSERT INTO timeline_entries (title, description, icon, color, avatar_id, start_date, end_date, link, is_active, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-    $stmt->bind_param("ssssssssii", $title, $desc, $icon, $color, $avatar_id, $start, $end, $link, $is_active, $sort);
+    $stmt = $conn->prepare("INSERT INTO timeline_entries (title, description, icon, color, avatar_id, display_type, start_date, end_date, link, is_active, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    $stmt->bind_param("sssssssssii", $title, $desc, $icon, $color, $avatar_id, $display_type, $start, $end, $link, $is_active, $sort);
     if ($stmt->execute()) {
+        $new_tl_id = $conn->insert_id;
+
+        // Handle multi-avatar selection
+        if ($display_type === 'avatar' && !empty($_POST['tl_avatars'])) {
+            $avatars = array_slice(array_filter($_POST['tl_avatars']), 0, 10);
+            foreach ($avatars as $si => $av_id) {
+                $av_clean = clean_input($av_id);
+                $avs = $conn->prepare("INSERT INTO timeline_avatars (timeline_entry_id, avatar_id, sort_order) VALUES (?, ?, ?)");
+                $avs->bind_param("isi", $new_tl_id, $av_clean, $si);
+                $avs->execute();
+            }
+        }
+
+        // Handle multi-image upload
+        if ($display_type === 'image' && !empty($_FILES['tl_images']['name'][0])) {
+            $file_count = min(count($_FILES['tl_images']['name']), 10);
+            for ($fi = 0; $fi < $file_count; $fi++) {
+                if (empty($_FILES['tl_images']['name'][$fi])) continue;
+                $single_file = [
+                    'name' => $_FILES['tl_images']['name'][$fi],
+                    'type' => $_FILES['tl_images']['type'][$fi],
+                    'tmp_name' => $_FILES['tl_images']['tmp_name'][$fi],
+                    'error' => $_FILES['tl_images']['error'][$fi],
+                    'size' => $_FILES['tl_images']['size'][$fi],
+                ];
+                $up = upload_image($single_file);
+                if (isset($up['success'])) {
+                    $img_path = $up['success'];
+                    $imgs = $conn->prepare("INSERT INTO timeline_images (timeline_entry_id, image_path, sort_order) VALUES (?, ?, ?)");
+                    $imgs->bind_param("isi", $new_tl_id, $img_path, $fi);
+                    $imgs->execute();
+                }
+            }
+        }
+
         $message = "Timeline entry added.";
     } else {
         $error = "Error adding timeline entry.";
@@ -814,6 +880,13 @@ if (isset($_POST['add_timeline'])) {
 // --- TIMELINE ENTRY DELETE ---
 if (isset($_GET['delete_timeline'])) {
     $id = (int) $_GET['delete_timeline'];
+    // Delete associated images from filesystem
+    $del_imgs = $conn->query("SELECT image_path FROM timeline_images WHERE timeline_entry_id=$id");
+    if ($del_imgs) {
+        while ($di = $del_imgs->fetch_assoc()) {
+            @unlink('../uploads/' . $di['image_path']);
+        }
+    }
     $conn->query("DELETE FROM timeline_entries WHERE id=$id");
     $message = "Timeline entry deleted.";
 }
@@ -826,19 +899,71 @@ if (isset($_POST['update_timeline'])) {
     $icon = clean_input($_POST['edit_tl_icon'] ?? 'fas fa-circle');
     $color = clean_input($_POST['edit_tl_color'] ?? '#ffd60a');
     $avatar_id = clean_input($_POST['edit_tl_avatar_id'] ?? '');
+    $display_type = clean_input($_POST['edit_tl_display_type'] ?? 'icon');
     $start = clean_input($_POST['edit_tl_start_date']);
     $end = !empty($_POST['edit_tl_end_date']) ? clean_input($_POST['edit_tl_end_date']) : null;
     $link = clean_input($_POST['edit_tl_link'] ?? '');
     $is_active = isset($_POST['edit_tl_is_active']) ? 1 : 0;
     $sort = (int) ($_POST['edit_tl_sort_order'] ?? 0);
 
-    $stmt = $conn->prepare("UPDATE timeline_entries SET title=?, description=?, icon=?, color=?, avatar_id=?, start_date=?, end_date=?, link=?, is_active=?, sort_order=? WHERE id=?");
-    $stmt->bind_param("ssssssssiii", $title, $desc, $icon, $color, $avatar_id, $start, $end, $link, $is_active, $sort, $id);
+    $stmt = $conn->prepare("UPDATE timeline_entries SET title=?, description=?, icon=?, color=?, avatar_id=?, display_type=?, start_date=?, end_date=?, link=?, is_active=?, sort_order=? WHERE id=?");
+    $stmt->bind_param("sssssssssiis", $title, $desc, $icon, $color, $avatar_id, $display_type, $start, $end, $link, $is_active, $sort, $id);
     if ($stmt->execute()) {
+        // Update multi-avatars if display type is avatar
+        if ($display_type === 'avatar' && isset($_POST['edit_tl_avatars'])) {
+            $conn->query("DELETE FROM timeline_avatars WHERE timeline_entry_id=$id");
+            $avatars = array_slice(array_filter($_POST['edit_tl_avatars']), 0, 10);
+            foreach ($avatars as $si => $av_id) {
+                $av_clean = clean_input($av_id);
+                $avs = $conn->prepare("INSERT INTO timeline_avatars (timeline_entry_id, avatar_id, sort_order) VALUES (?, ?, ?)");
+                $avs->bind_param("isi", $id, $av_clean, $si);
+                $avs->execute();
+            }
+        }
+
+        // Handle new image uploads if display type is image
+        if ($display_type === 'image' && !empty($_FILES['edit_tl_images']['name'][0])) {
+            // Get current count
+            $cnt_q = $conn->query("SELECT COUNT(*) as cnt FROM timeline_images WHERE timeline_entry_id=$id");
+            $current_count = $cnt_q ? $cnt_q->fetch_assoc()['cnt'] : 0;
+            $remaining = 10 - $current_count;
+            $file_count = min(count($_FILES['edit_tl_images']['name']), $remaining);
+            for ($fi = 0; $fi < $file_count; $fi++) {
+                if (empty($_FILES['edit_tl_images']['name'][$fi])) continue;
+                $single_file = [
+                    'name' => $_FILES['edit_tl_images']['name'][$fi],
+                    'type' => $_FILES['edit_tl_images']['type'][$fi],
+                    'tmp_name' => $_FILES['edit_tl_images']['tmp_name'][$fi],
+                    'error' => $_FILES['edit_tl_images']['error'][$fi],
+                    'size' => $_FILES['edit_tl_images']['size'][$fi],
+                ];
+                $up = upload_image($single_file);
+                if (isset($up['success'])) {
+                    $img_path = $up['success'];
+                    $srt = $current_count + $fi;
+                    $imgs = $conn->prepare("INSERT INTO timeline_images (timeline_entry_id, image_path, sort_order) VALUES (?, ?, ?)");
+                    $imgs->bind_param("isi", $id, $img_path, $srt);
+                    $imgs->execute();
+                }
+            }
+        }
+
         $message = "Timeline entry updated.";
     } else {
         $error = "Error updating timeline entry.";
     }
+}
+
+// --- TIMELINE IMAGE DELETE ---
+if (isset($_GET['delete_tl_image'])) {
+    $img_id = (int) $_GET['delete_tl_image'];
+    $img_q = $conn->query("SELECT image_path FROM timeline_images WHERE id=$img_id");
+    if ($img_q && $img_q->num_rows > 0) {
+        $img_row = $img_q->fetch_assoc();
+        @unlink('../uploads/' . $img_row['image_path']);
+    }
+    $conn->query("DELETE FROM timeline_images WHERE id=$img_id");
+    $message = "Timeline image deleted.";
 }
 
 
@@ -1918,186 +2043,178 @@ $active_tab = isset($_GET['tab']) ? $_GET['tab'] : 'hero';
         <?php if ($active_tab == 'timeline'): ?>
             <?php
             $timeline_entries = $conn->query("SELECT * FROM timeline_entries ORDER BY sort_order ASC, start_date DESC");
-            // DiceBear avatar seeds — 50 male, 50 female, cute styles
-            $avatar_styles = ['adventurer'];
-            $male_seeds = [];
-            $female_seeds = [];
-            for ($i = 1; $i <= 50; $i++) {
-                $male_seeds[] = "male-avatar-" . $i;
-                $female_seeds[] = "female-avatar-" . $i;
-            }
+            $all_tl_images = [];
+            $tl_img_q = $conn->query("SELECT * FROM timeline_images ORDER BY sort_order ASC");
+            if ($tl_img_q) { while ($r = $tl_img_q->fetch_assoc()) { $all_tl_images[$r['timeline_entry_id']][] = $r; } }
+            $all_tl_avatars = [];
+            $tl_av_q = $conn->query("SELECT * FROM timeline_avatars ORDER BY sort_order ASC");
+            if ($tl_av_q) { while ($r = $tl_av_q->fetch_assoc()) { $all_tl_avatars[$r['timeline_entry_id']][] = $r; } }
+            $male_seeds = []; $female_seeds = [];
+            for ($i = 1; $i <= 50; $i++) { $male_seeds[] = "male-avatar-" . $i; $female_seeds[] = "female-avatar-" . $i; }
             ?>
             <div class="admin-card fade-in">
                 <h2><i class="fas fa-stream"></i> Add Timeline Entry</h2>
-                <form method="POST">
+                <form method="POST" enctype="multipart/form-data">
                     <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
-                        <div class="form-group">
-                            <label>Title <span style="color:red">*</span></label>
-                            <input type="text" name="tl_title" placeholder="e.g. Started at TinkerHub" required>
-                        </div>
-                        <div class="form-group">
-                            <label>Icon Class (FontAwesome)</label>
-                            <input type="text" name="tl_icon" value="fas fa-circle" placeholder="fas fa-rocket">
-                        </div>
+                        <div class="form-group"><label>Title <span style="color:red">*</span></label><input type="text" name="tl_title" placeholder="e.g. Started at TinkerHub" required></div>
+                        <div class="form-group"><label>Icon Class (FontAwesome)</label><input type="text" name="tl_icon" value="fas fa-circle" placeholder="fas fa-rocket"></div>
                     </div>
-                    <div class="form-group">
-                        <label>Description</label>
-                        <textarea name="tl_description" rows="2" placeholder="Brief description of this timeline event"></textarea>
-                    </div>
+                    <div class="form-group"><label>Description</label><textarea name="tl_description" rows="2" placeholder="Brief description"></textarea></div>
                     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;">
-                        <div class="form-group">
-                            <label>Start Date <span style="color:red">*</span></label>
-                            <input type="date" name="tl_start_date" required>
-                        </div>
-                        <div class="form-group">
-                            <label>End Date <small style="color:#999">(leave empty = ongoing)</small></label>
-                            <input type="date" name="tl_end_date">
-                        </div>
-                        <div class="form-group">
-                            <label>Bar Color</label>
-                            <div style="display:flex;gap:0.5rem;align-items:center;">
-                                <input type="color" name="tl_color" value="#ffd60a" style="width:50px;height:36px;border:1px solid #ddd;border-radius:4px;cursor:pointer;">
-                                <span style="color:#999;font-size:0.8rem;">Pick accent</span>
-                            </div>
-                        </div>
+                        <div class="form-group"><label>Start Date <span style="color:red">*</span></label><input type="date" name="tl_start_date" required></div>
+                        <div class="form-group"><label>End Date <small style="color:#999">(empty = ongoing)</small></label><input type="date" name="tl_end_date"></div>
+                        <div class="form-group"><label>Bar Color</label><div style="display:flex;gap:0.5rem;align-items:center;"><input type="color" name="tl_color" value="#ffd60a" style="width:50px;height:36px;border:1px solid #ddd;border-radius:4px;cursor:pointer;"><span style="color:#999;font-size:0.8rem;">Pick accent</span></div></div>
                     </div>
                     <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
-                        <div class="form-group">
-                            <label>Link (optional)</label>
-                            <input type="url" name="tl_link" placeholder="https://example.com">
-                        </div>
-                        <div class="form-group">
-                            <label>Sort Order</label>
-                            <input type="number" name="tl_sort_order" value="0" min="0">
-                        </div>
+                        <div class="form-group"><label>Link (optional)</label><input type="url" name="tl_link" placeholder="https://example.com"></div>
+                        <div class="form-group"><label>Sort Order</label><input type="number" name="tl_sort_order" value="0" min="0"></div>
                     </div>
                     <div class="form-group">
-                        <label style="margin-bottom:0.5rem;display:block;">Choose Avatar</label>
-                        <input type="hidden" name="tl_avatar_id" id="tl_avatar_id" value="">
-                        <div style="display:flex;gap:0.3rem;align-items:center;margin-bottom:0.5rem;">
-                            <button type="button" class="btn-sm" onclick="showAvatarGender('male')" style="padding:0.3rem 0.8rem;font-size:0.75rem;background:#e0e7ff;color:#3730a3;border:1px solid #c7d2fe;border-radius:4px;cursor:pointer;">👨 Male</button>
-                            <button type="button" class="btn-sm" onclick="showAvatarGender('female')" style="padding:0.3rem 0.8rem;font-size:0.75rem;background:#fce7f3;color:#be185d;border:1px solid #fbcfe8;border-radius:4px;cursor:pointer;">👩 Female</button>
-                            <span id="selectedAvatarLabel" style="margin-left:auto;font-size:0.75rem;color:#999;">None selected</span>
+                        <label style="margin-bottom:0.5rem;display:block;font-weight:700;">Display Type</label>
+                        <div style="display:flex;gap:0.5rem;margin-bottom:1rem;">
+                            <button type="button" onclick="switchDisplayType('icon','add')" style="padding:0.5rem 1.2rem;font-size:0.82rem;background:#111;color:#fff;border:2px solid #111;border-radius:0;cursor:pointer;font-weight:700;" id="addTypeIcon"><i class="fas fa-icons"></i> Icon</button>
+                            <button type="button" onclick="switchDisplayType('avatar','add')" style="padding:0.5rem 1.2rem;font-size:0.82rem;background:#fff;color:#111;border:2px solid #ddd;border-radius:0;cursor:pointer;font-weight:700;" id="addTypeAvatar"><i class="fas fa-user-circle"></i> Avatar (up to 10)</button>
+                            <button type="button" onclick="switchDisplayType('image','add')" style="padding:0.5rem 1.2rem;font-size:0.82rem;background:#fff;color:#111;border:2px solid #ddd;border-radius:0;cursor:pointer;font-weight:700;" id="addTypeImage"><i class="fas fa-image"></i> Image (up to 10)</button>
                         </div>
-                        <div id="avatarGridMale" style="display:grid;grid-template-columns:repeat(10,1fr);gap:0.4rem;max-height:200px;overflow-y:auto;border:1px solid #e5e7eb;border-radius:6px;padding:0.5rem;background:#f9fafb;">
-                            <?php foreach ($male_seeds as $idx => $seed): ?>
-                            <div class="avatar-pick" data-avatar="m-<?php echo $idx+1; ?>" onclick="pickAvatar(this, 'tl_avatar_id')"
-                                 style="cursor:pointer;border-radius:50%;border:2px solid transparent;padding:2px;transition:all 0.2s;">
-                                <img src="https://api.dicebear.com/7.x/adventurer/svg?seed=<?php echo $seed; ?>&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf"
-                                     style="width:100%;border-radius:50%;" alt="Male <?php echo $idx+1; ?>" loading="lazy">
+                        <input type="hidden" name="tl_display_type" id="tl_display_type" value="icon">
+                    </div>
+                    <div id="addAvatarPanel" style="display:none;">
+                        <div class="form-group">
+                            <label>Choose Avatars <small style="color:#999;">(click up to 10)</small></label>
+                            <input type="hidden" name="tl_avatar_id" id="tl_avatar_id" value="">
+                            <div style="display:flex;gap:0.3rem;align-items:center;margin-bottom:0.5rem;">
+                                <button type="button" onclick="showAvatarGender('male','add')" style="padding:0.3rem 0.8rem;font-size:0.75rem;background:#e0e7ff;color:#3730a3;border:1px solid #c7d2fe;border-radius:4px;cursor:pointer;">&#x1F468; Male</button>
+                                <button type="button" onclick="showAvatarGender('female','add')" style="padding:0.3rem 0.8rem;font-size:0.75rem;background:#fce7f3;color:#be185d;border:1px solid #fbcfe8;border-radius:4px;cursor:pointer;">&#x1F469; Female</button>
+                                <span id="addAvatarCount" style="margin-left:auto;font-size:0.75rem;color:#999;">0/10 selected</span>
                             </div>
-                            <?php endforeach; ?>
-                        </div>
-                        <div id="avatarGridFemale" style="display:none;grid-template-columns:repeat(10,1fr);gap:0.4rem;max-height:200px;overflow-y:auto;border:1px solid #e5e7eb;border-radius:6px;padding:0.5rem;background:#f9fafb;">
-                            <?php foreach ($female_seeds as $idx => $seed): ?>
-                            <div class="avatar-pick" data-avatar="f-<?php echo $idx+1; ?>" onclick="pickAvatar(this, 'tl_avatar_id')"
-                                 style="cursor:pointer;border-radius:50%;border:2px solid transparent;padding:2px;transition:all 0.2s;">
-                                <img src="https://api.dicebear.com/7.x/adventurer/svg?seed=<?php echo $seed; ?>&backgroundColor=ffd5dc,ffdfbf,c0aede,b6e3f4,d1d4f9"
-                                     style="width:100%;border-radius:50%;" alt="Female <?php echo $idx+1; ?>" loading="lazy">
+                            <div id="addAvatarGridMale" style="display:grid;grid-template-columns:repeat(10,1fr);gap:0.4rem;max-height:200px;overflow-y:auto;border:1px solid #e5e7eb;border-radius:6px;padding:0.5rem;background:#f9fafb;">
+                                <?php foreach ($male_seeds as $idx => $seed): ?>
+                                <div class="avatar-pick-multi" data-avatar="m-<?php echo $idx+1; ?>" onclick="toggleMultiAvatar(this,'add')" style="cursor:pointer;border-radius:50%;border:2px solid transparent;padding:2px;transition:all 0.2s;">
+                                    <img src="https://api.dicebear.com/7.x/adventurer/svg?seed=<?php echo $seed; ?>&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf" style="width:100%;border-radius:50%;" alt="M<?php echo $idx+1; ?>" loading="lazy">
+                                </div>
+                                <?php endforeach; ?>
                             </div>
-                            <?php endforeach; ?>
+                            <div id="addAvatarGridFemale" style="display:none;grid-template-columns:repeat(10,1fr);gap:0.4rem;max-height:200px;overflow-y:auto;border:1px solid #e5e7eb;border-radius:6px;padding:0.5rem;background:#f9fafb;">
+                                <?php foreach ($female_seeds as $idx => $seed): ?>
+                                <div class="avatar-pick-multi" data-avatar="f-<?php echo $idx+1; ?>" onclick="toggleMultiAvatar(this,'add')" style="cursor:pointer;border-radius:50%;border:2px solid transparent;padding:2px;transition:all 0.2s;">
+                                    <img src="https://api.dicebear.com/7.x/adventurer/svg?seed=<?php echo $seed; ?>&backgroundColor=ffd5dc,ffdfbf,c0aede,b6e3f4,d1d4f9" style="width:100%;border-radius:50%;" alt="F<?php echo $idx+1; ?>" loading="lazy">
+                                </div>
+                                <?php endforeach; ?>
+                            </div>
+                            <div id="addAvatarInputs"></div>
                         </div>
                     </div>
-                    <div class="form-group">
-                        <label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;">
-                            <input type="checkbox" name="tl_is_active" checked style="width:16px;height:16px;"> Show on website
-                        </label>
+                    <div id="addImagePanel" style="display:none;">
+                        <div class="form-group">
+                            <label>Upload Images <small style="color:#999;">(up to 10, max 5MB each)</small></label>
+                            <input type="file" name="tl_images[]" multiple accept="image/*" style="padding:0.6rem;border:2px dashed #ddd;border-radius:6px;width:100%;background:#f9fafb;cursor:pointer;" onchange="limitFiles(this,10)">
+                        </div>
                     </div>
+                    <div class="form-group"><label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;"><input type="checkbox" name="tl_is_active" checked style="width:16px;height:16px;"> Show on website</label></div>
                     <button type="submit" name="add_timeline" class="btn-primary"><i class="fas fa-plus"></i> Add Entry</button>
                 </form>
             </div>
-
-            <!-- Existing entries table -->
             <div class="admin-card fade-in">
                 <h2><i class="fas fa-list"></i> Timeline Entries</h2>
                 <?php if ($timeline_entries && $timeline_entries->num_rows > 0): ?>
-                <div class="table-responsive">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Avatar</th>
-                                <th>Title</th>
-                                <th>Duration</th>
-                                <th>Color</th>
-                                <th>Active</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php while ($tl = $timeline_entries->fetch_assoc()):
-                                // Build avatar URL from avatar_id
-                                $av_url = '';
-                                if (!empty($tl['avatar_id'])) {
-                                    $parts = explode('-', $tl['avatar_id']);
-                                    $gender = $parts[0] ?? 'm';
-                                    $num = $parts[1] ?? 1;
-                                    $seed_prefix = $gender === 'f' ? 'female-avatar-' : 'male-avatar-';
-                                    $av_url = "https://api.dicebear.com/7.x/adventurer/svg?seed={$seed_prefix}{$num}&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf";
-                                }
-                            ?>
-                            <tr>
-                                <td>
-                                    <?php if ($av_url): ?>
-                                        <img src="<?php echo $av_url; ?>" style="width:36px;height:36px;border-radius:50%;border:2px solid <?php echo htmlspecialchars($tl['color']); ?>;">
-                                    <?php else: ?>
-                                        <i class="<?php echo htmlspecialchars($tl['icon']); ?>" style="font-size:1.2rem;color:<?php echo htmlspecialchars($tl['color']); ?>;"></i>
+                <div class="table-responsive"><table><thead><tr><th>Preview</th><th>Title</th><th>Type</th><th>Duration</th><th>Color</th><th>Active</th><th>Actions</th></tr></thead><tbody>
+                    <?php while ($tl = $timeline_entries->fetch_assoc()):
+                        $tl_id = $tl['id']; $d_type = $tl['display_type'] ?? 'icon';
+                        $entry_imgs = $all_tl_images[$tl_id] ?? []; $entry_avs = $all_tl_avatars[$tl_id] ?? [];
+                        $preview_html = '<i class="'.htmlspecialchars($tl['icon']).'" style="font-size:1.2rem;color:'.htmlspecialchars($tl['color']).';"></i>';
+                        if ($d_type === 'avatar' && !empty($entry_avs)) {
+                            $p = explode('-', $entry_avs[0]['avatar_id']); $sp = ($p[0]??'m')==='f'?'female-avatar-':'male-avatar-';
+                            $preview_html = '<img src="https://api.dicebear.com/7.x/adventurer/svg?seed='.$sp.($p[1]??1).'&backgroundColor=b6e3f4" style="width:36px;height:36px;border-radius:50%;border:2px solid '.htmlspecialchars($tl['color']).';">';
+                            if (count($entry_avs)>1) $preview_html .= '<span style="font-size:0.7rem;color:#999;margin-left:4px;">+'.(count($entry_avs)-1).'</span>';
+                        } elseif ($d_type === 'image' && !empty($entry_imgs)) {
+                            $preview_html = '<img src="../uploads/'.htmlspecialchars($entry_imgs[0]['image_path']).'" style="width:36px;height:36px;border-radius:6px;object-fit:cover;border:2px solid '.htmlspecialchars($tl['color']).';">';
+                            if (count($entry_imgs)>1) $preview_html .= '<span style="font-size:0.7rem;color:#999;margin-left:4px;">+'.(count($entry_imgs)-1).'</span>';
+                        } elseif (!empty($tl['avatar_id'])) {
+                            $p = explode('-', $tl['avatar_id']); $sp = ($p[0]??'m')==='f'?'female-avatar-':'male-avatar-';
+                            $preview_html = '<img src="https://api.dicebear.com/7.x/adventurer/svg?seed='.$sp.($p[1]??1).'&backgroundColor=b6e3f4" style="width:36px;height:36px;border-radius:50%;border:2px solid '.htmlspecialchars($tl['color']).';">';
+                        }
+                        $type_labels = ['icon'=>'Icon','avatar'=>'Avatar','image'=>'Image'];
+                    ?>
+                    <tr>
+                        <td style="display:flex;align-items:center;gap:4px;"><?php echo $preview_html; ?></td>
+                        <td><strong><?php echo htmlspecialchars($tl['title']); ?></strong><?php if($tl['description']): ?><br><small style="color:#999;"><?php echo htmlspecialchars(substr($tl['description'],0,60)); ?>…</small><?php endif; ?></td>
+                        <td><span style="font-size:0.75rem;padding:0.2rem 0.5rem;background:#f1f5f9;border-radius:4px;"><?php echo $type_labels[$d_type] ?? 'Icon'; ?></span></td>
+                        <td style="white-space:nowrap;font-size:0.82rem;"><?php echo date('M Y', strtotime($tl['start_date'])); ?> → <?php echo $tl['end_date'] ? date('M Y', strtotime($tl['end_date'])) : '<span style="color:#22c55e;">Present</span>'; ?></td>
+                        <td><span style="display:inline-block;width:20px;height:20px;background:<?php echo htmlspecialchars($tl['color']); ?>;border-radius:3px;border:1px solid rgba(0,0,0,0.1);"></span></td>
+                        <td><?php echo $tl['is_active'] ? '&#x2705;' : '&#x274C;'; ?></td>
+                        <td style="white-space:nowrap;">
+                            <button type="button" onclick="toggleEditRow('editTL<?php echo $tl['id']; ?>')" class="btn-sm" style="background:#eef2ff;color:#4338ca;padding:0.3rem 0.6rem;border:none;border-radius:4px;cursor:pointer;font-size:0.75rem;"><i class="fas fa-edit"></i></button>
+                            <a href="?tab=timeline&delete_timeline=<?php echo $tl['id']; ?>" onclick="return confirm('Delete?')" class="btn-sm" style="background:#fef2f2;color:#dc2626;padding:0.3rem 0.6rem;border:none;border-radius:4px;text-decoration:none;font-size:0.75rem;"><i class="fas fa-trash"></i></a>
+                        </td>
+                    </tr>
+                    <tr id="editTL<?php echo $tl['id']; ?>" style="display:none;">
+                        <td colspan="7" style="padding:1rem;background:#f8fafc;">
+                            <form method="POST" enctype="multipart/form-data">
+                                <input type="hidden" name="edit_tl_id" value="<?php echo $tl['id']; ?>">
+                                <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.8rem;">
+                                    <div class="form-group"><label>Title</label><input type="text" name="edit_tl_title" value="<?php echo htmlspecialchars($tl['title']); ?>" required></div>
+                                    <div class="form-group"><label>Icon</label><input type="text" name="edit_tl_icon" value="<?php echo htmlspecialchars($tl['icon']); ?>"></div>
+                                </div>
+                                <div class="form-group"><label>Description</label><textarea name="edit_tl_description" rows="2"><?php echo htmlspecialchars($tl['description'] ?? ''); ?></textarea></div>
+                                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.8rem;">
+                                    <div class="form-group"><label>Start</label><input type="date" name="edit_tl_start_date" value="<?php echo $tl['start_date']; ?>" required></div>
+                                    <div class="form-group"><label>End</label><input type="date" name="edit_tl_end_date" value="<?php echo $tl['end_date'] ?? ''; ?>"></div>
+                                    <div class="form-group"><label>Color</label><input type="color" name="edit_tl_color" value="<?php echo htmlspecialchars($tl['color']); ?>" style="width:50px;height:36px;"></div>
+                                </div>
+                                <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.8rem;">
+                                    <div class="form-group"><label>Link</label><input type="url" name="edit_tl_link" value="<?php echo htmlspecialchars($tl['link'] ?? ''); ?>"></div>
+                                    <div class="form-group"><label>Sort</label><input type="number" name="edit_tl_sort_order" value="<?php echo $tl['sort_order']; ?>"></div>
+                                </div>
+                                <div class="form-group"><label style="font-weight:700;">Display Type</label>
+                                    <select name="edit_tl_display_type" style="padding:0.5rem;border:2px solid #ddd;border-radius:4px;font-size:0.85rem;width:200px;">
+                                        <option value="icon" <?php echo $d_type==='icon'?'selected':''; ?>>Icon</option>
+                                        <option value="avatar" <?php echo $d_type==='avatar'?'selected':''; ?>>Avatar</option>
+                                        <option value="image" <?php echo $d_type==='image'?'selected':''; ?>>Image</option>
+                                    </select>
+                                </div>
+                                <div class="form-group"><label>Avatar ID</label>
+                                    <input type="text" name="edit_tl_avatar_id" value="<?php echo htmlspecialchars($tl['avatar_id'] ?? ''); ?>" placeholder="e.g. m-3 or f-12">
+                                    <?php if (!empty($entry_avs)): ?>
+                                    <div style="margin-top:0.3rem;">
+                                        <?php foreach ($entry_avs as $eav):
+                                            $p = explode('-', $eav['avatar_id']); $sp = ($p[0]??'m')==='f'?'female-avatar-':'male-avatar-';
+                                        ?>
+                                        <input type="hidden" name="edit_tl_avatars[]" value="<?php echo htmlspecialchars($eav['avatar_id']); ?>">
+                                        <img src="https://api.dicebear.com/7.x/adventurer/svg?seed=<?php echo $sp.($p[1]??1); ?>&backgroundColor=b6e3f4" style="width:28px;height:28px;border-radius:50%;border:1px solid #ddd;margin-right:2px;">
+                                        <?php endforeach; ?>
+                                    </div>
                                     <?php endif; ?>
-                                </td>
-                                <td>
-                                    <strong><?php echo htmlspecialchars($tl['title']); ?></strong>
-                                    <?php if ($tl['description']): ?>
-                                    <br><small style="color:#999;"><?php echo htmlspecialchars(substr($tl['description'], 0, 60)); ?>…</small>
-                                    <?php endif; ?>
-                                </td>
-                                <td style="white-space:nowrap;font-size:0.82rem;">
-                                    <?php echo date('M Y', strtotime($tl['start_date'])); ?> →
-                                    <?php echo $tl['end_date'] ? date('M Y', strtotime($tl['end_date'])) : '<span style="color:#22c55e;">Present</span>'; ?>
-                                </td>
-                                <td><span style="display:inline-block;width:20px;height:20px;background:<?php echo htmlspecialchars($tl['color']); ?>;border-radius:3px;border:1px solid rgba(0,0,0,0.1);"></span></td>
-                                <td><?php echo $tl['is_active'] ? '✅' : '❌'; ?></td>
-                                <td style="white-space:nowrap;">
-                                    <button type="button" onclick="toggleEditRow('editTL<?php echo $tl['id']; ?>')" class="btn-sm" style="background:#eef2ff;color:#4338ca;padding:0.3rem 0.6rem;border:none;border-radius:4px;cursor:pointer;font-size:0.75rem;"><i class="fas fa-edit"></i></button>
-                                    <a href="?tab=timeline&delete_timeline=<?php echo $tl['id']; ?>" onclick="return confirm('Delete this entry?')" class="btn-sm" style="background:#fef2f2;color:#dc2626;padding:0.3rem 0.6rem;border:none;border-radius:4px;text-decoration:none;font-size:0.75rem;"><i class="fas fa-trash"></i></a>
-                                </td>
-                            </tr>
-                            <!-- Inline edit row -->
-                            <tr id="editTL<?php echo $tl['id']; ?>" style="display:none;">
-                                <td colspan="6" style="padding:1rem;background:#f8fafc;">
-                                    <form method="POST">
-                                        <input type="hidden" name="edit_tl_id" value="<?php echo $tl['id']; ?>">
-                                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.8rem;">
-                                            <div class="form-group"><label>Title</label><input type="text" name="edit_tl_title" value="<?php echo htmlspecialchars($tl['title']); ?>" required></div>
-                                            <div class="form-group"><label>Icon</label><input type="text" name="edit_tl_icon" value="<?php echo htmlspecialchars($tl['icon']); ?>"></div>
+                                </div>
+                                <?php if (!empty($entry_imgs)): ?>
+                                <div class="form-group"><label>Current Images (<?php echo count($entry_imgs); ?>/10)</label>
+                                    <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:0.3rem;">
+                                        <?php foreach ($entry_imgs as $eimg): ?>
+                                        <div style="position:relative;display:inline-block;">
+                                            <img src="../uploads/<?php echo htmlspecialchars($eimg['image_path']); ?>" style="width:60px;height:60px;object-fit:cover;border-radius:6px;border:2px solid #ddd;">
+                                            <a href="?tab=timeline&delete_tl_image=<?php echo $eimg['id']; ?>" onclick="return confirm('Delete image?')" style="position:absolute;top:-6px;right:-6px;background:#ef4444;color:#fff;width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.6rem;text-decoration:none;border:2px solid #fff;">x</a>
                                         </div>
-                                        <div class="form-group"><label>Description</label><textarea name="edit_tl_description" rows="2"><?php echo htmlspecialchars($tl['description'] ?? ''); ?></textarea></div>
-                                        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.8rem;">
-                                            <div class="form-group"><label>Start Date</label><input type="date" name="edit_tl_start_date" value="<?php echo $tl['start_date']; ?>" required></div>
-                                            <div class="form-group"><label>End Date</label><input type="date" name="edit_tl_end_date" value="<?php echo $tl['end_date'] ?? ''; ?>"></div>
-                                            <div class="form-group"><label>Color</label><input type="color" name="edit_tl_color" value="<?php echo htmlspecialchars($tl['color']); ?>" style="width:50px;height:36px;"></div>
-                                        </div>
-                                        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.8rem;">
-                                            <div class="form-group"><label>Link</label><input type="url" name="edit_tl_link" value="<?php echo htmlspecialchars($tl['link'] ?? ''); ?>"></div>
-                                            <div class="form-group"><label>Sort Order</label><input type="number" name="edit_tl_sort_order" value="<?php echo $tl['sort_order']; ?>"></div>
-                                            <div class="form-group"><label>Avatar ID</label><input type="text" name="edit_tl_avatar_id" value="<?php echo htmlspecialchars($tl['avatar_id'] ?? ''); ?>" placeholder="e.g. m-3 or f-12"></div>
-                                        </div>
-                                        <div class="form-group">
-                                            <label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;">
-                                                <input type="checkbox" name="edit_tl_is_active" <?php echo $tl['is_active'] ? 'checked' : ''; ?> style="width:16px;height:16px;"> Show on website
-                                            </label>
-                                        </div>
-                                        <button type="submit" name="update_timeline" class="btn-primary" style="font-size:0.85rem;"><i class="fas fa-save"></i> Save Changes</button>
-                                    </form>
-                                </td>
-                            </tr>
-                            <?php endwhile; ?>
-                        </tbody>
-                    </table>
-                </div>
+                                        <?php endforeach; ?>
+                                    </div>
+                                </div>
+                                <?php endif; ?>
+                                <div class="form-group"><label>Add Images <small style="color:#999;">(<?php echo max(0,10-count($entry_imgs)); ?> left)</small></label>
+                                    <input type="file" name="edit_tl_images[]" multiple accept="image/*" style="padding:0.4rem;border:1px dashed #ddd;border-radius:4px;width:100%;font-size:0.82rem;" onchange="limitFiles(this,<?php echo max(0,10-count($entry_imgs)); ?>)">
+                                </div>
+                                <div class="form-group"><label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;"><input type="checkbox" name="edit_tl_is_active" <?php echo $tl['is_active']?'checked':''; ?> style="width:16px;height:16px;"> Show</label></div>
+                                <button type="submit" name="update_timeline" class="btn-primary" style="font-size:0.85rem;"><i class="fas fa-save"></i> Save</button>
+                            </form>
+                        </td>
+                    </tr>
+                    <?php endwhile; ?>
+                </tbody></table></div>
                 <?php else: ?>
                     <p style="text-align:center;color:#999;padding:2rem;">No timeline entries yet. Add your first one above!</p>
                 <?php endif; ?>
             </div>
         <?php endif; ?>
+
+
+
 
         <?php if ($active_tab == 'profile'): ?>
                 <div class="admin-card fade-in">
@@ -2222,10 +2339,35 @@ $active_tab = isset($_GET['tab']) ? $_GET['tab'] : 'hero';
             row.style.display = isHidden ? (row.tagName === 'TR' ? 'table-row' : 'block') : 'none';
         }
 
+        // Timeline Display Type Switcher
+        function switchDisplayType(type, prefix) {
+            document.getElementById(prefix + 'TypeIcon').classList.remove('active');
+            document.getElementById(prefix + 'TypeAvatar').classList.remove('active');
+            document.getElementById(prefix + 'TypeImage').classList.remove('active');
+            
+            document.getElementById(prefix + 'TypeIcon').style.background = '#fff';
+            document.getElementById(prefix + 'TypeIcon').style.color = '#111';
+            document.getElementById(prefix + 'TypeAvatar').style.background = '#fff';
+            document.getElementById(prefix + 'TypeAvatar').style.color = '#111';
+            document.getElementById(prefix + 'TypeImage').style.background = '#fff';
+            document.getElementById(prefix + 'TypeImage').style.color = '#111';
+
+            const btn = document.getElementById(prefix + 'Type' + type.charAt(0).toUpperCase() + type.slice(1));
+            btn.classList.add('active');
+            btn.style.background = '#111';
+            btn.style.color = '#fff';
+
+            if(prefix === 'add') {
+                document.getElementById('tl_display_type').value = type;
+                document.getElementById('addAvatarPanel').style.display = type === 'avatar' ? 'block' : 'none';
+                document.getElementById('addImagePanel').style.display = type === 'image' ? 'block' : 'none';
+            }
+        }
+
         // Avatar picker functions
-        function showAvatarGender(gender) {
-            const maleGrid = document.getElementById('avatarGridMale');
-            const femaleGrid = document.getElementById('avatarGridFemale');
+        function showAvatarGender(gender, prefix = '') {
+            const maleGrid = document.getElementById(prefix + 'AvatarGridMale');
+            const femaleGrid = document.getElementById(prefix + 'AvatarGridFemale');
             if (!maleGrid || !femaleGrid) return;
             if (gender === 'male') {
                 maleGrid.style.display = 'grid';
@@ -2236,20 +2378,49 @@ $active_tab = isset($_GET['tab']) ? $_GET['tab'] : 'hero';
             }
         }
 
-        function pickAvatar(el, inputId) {
-            // Remove previous selection
-            document.querySelectorAll('.avatar-pick').forEach(a => {
-                a.style.borderColor = 'transparent';
-                a.style.transform = 'scale(1)';
-            });
-            // Highlight selected
-            el.style.borderColor = '#ffd60a';
-            el.style.transform = 'scale(1.15)';
-            // Set hidden input value
+        // Multi Avatar Picker
+        let selectedAvatars = [];
+        function toggleMultiAvatar(el, prefix) {
             const avatarId = el.dataset.avatar;
-            document.getElementById(inputId).value = avatarId;
-            const label = document.getElementById('selectedAvatarLabel');
-            if (label) label.textContent = '✓ Avatar ' + avatarId + ' selected';
+            const index = selectedAvatars.indexOf(avatarId);
+
+            if (index > -1) {
+                // Deselect
+                selectedAvatars.splice(index, 1);
+                el.style.borderColor = 'transparent';
+                el.style.transform = 'scale(1)';
+            } else {
+                // Select (Limit to 10)
+                if (selectedAvatars.length >= 10) {
+                    alert('You can select a maximum of 10 avatars.');
+                    return;
+                }
+                selectedAvatars.push(avatarId);
+                el.style.borderColor = '#ffd60a';
+                el.style.transform = 'scale(1.15)';
+            }
+
+            // Update UI count
+            document.getElementById(prefix + 'AvatarCount').textContent = selectedAvatars.length + '/10 selected';
+            
+            // Build hidden inputs
+            const container = document.getElementById(prefix + 'AvatarInputs');
+            container.innerHTML = '';
+            selectedAvatars.forEach(id => {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = prefix === 'add' ? 'tl_avatars[]' : 'edit_tl_avatars[]';
+                input.value = id;
+                container.appendChild(input);
+            });
+        }
+
+        // Limit File Uploads
+        function limitFiles(input, maxFiles) {
+            if (input.files.length > maxFiles) {
+                alert(`You can only upload a maximum of ${maxFiles} images.`);
+                input.value = ''; // clear selection
+            }
         }
     </script>
 </body>

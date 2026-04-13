@@ -152,8 +152,8 @@ nav.scrolled {
 
 .logo img {
     height: 28px;
+    max-width: 120px;
     object-fit: contain;
-    filter: brightness(0) invert(1);
 }
 
 .nav-links {
@@ -1782,8 +1782,54 @@ footer p {
     left: 0;
     z-index: 4;
     min-width: 220px;
+    cursor: pointer;
 }
 
+/* --- Hover Date Tooltip --- */
+.tl-date-tooltip {
+    position: absolute;
+    left: 50%;
+    bottom: calc(100% + 8px);
+    transform: translateX(-50%) translateY(6px);
+    background: var(--bg-secondary);
+    color: var(--text-white);
+    padding: 0.45rem 0.9rem;
+    border-radius: 0;
+    border: 2px solid var(--text-primary);
+    box-shadow: 3px 3px 0 var(--accent-yellow);
+    font-family: 'Playfair Display', serif;
+    font-size: 0.78rem;
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.25s ease, transform 0.25s ease, visibility 0.25s;
+    z-index: 20;
+}
+
+.tl-date-tooltip em {
+    font-style: italic;
+    color: var(--accent-yellow);
+    letter-spacing: 0.3px;
+}
+
+.tl-date-tooltip::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 6px solid transparent;
+    border-top-color: var(--bg-secondary);
+}
+
+.tl-label:hover .tl-date-tooltip {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(0);
+}
+
+/* Avatar in label */
 .tl-label-avatar {
     width: 36px;
     height: 36px;
@@ -1792,8 +1838,32 @@ footer p {
     flex-shrink: 0;
     object-fit: cover;
     background: var(--bg-primary);
+    transition: transform 0.2s, border-color 0.2s;
 }
 
+.tl-label:hover .tl-label-avatar {
+    transform: scale(1.1);
+    border-color: var(--accent-yellow);
+}
+
+/* Image in label */
+.tl-label-image {
+    width: 36px;
+    height: 36px;
+    border-radius: 6px;
+    border: 2px solid var(--border-color);
+    flex-shrink: 0;
+    object-fit: cover;
+    background: var(--bg-primary);
+    transition: transform 0.2s, border-color 0.2s;
+}
+
+.tl-label:hover .tl-label-image {
+    transform: scale(1.1);
+    border-color: var(--accent-lime);
+}
+
+/* Icon in label — FIXED: proper centering and rendering */
 .tl-label-icon {
     width: 36px;
     height: 36px;
@@ -1805,6 +1875,21 @@ footer p {
     border: 2px solid var(--border-color);
     flex-shrink: 0;
     font-size: 0.9rem;
+    transition: transform 0.2s, border-color 0.2s;
+}
+
+.tl-label-icon i {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    line-height: 1;
+}
+
+.tl-label:hover .tl-label-icon {
+    transform: scale(1.1);
+    border-color: var(--accent-yellow);
 }
 
 .tl-label-text {
@@ -1873,6 +1958,7 @@ footer p {
     box-shadow: 0 4px 12px rgba(0,0,0,0.12);
 }
 
+/* Avatar thumbnails on bar */
 .tl-bar-avatar {
     width: 24px;
     height: 24px;
@@ -1882,19 +1968,40 @@ footer p {
     background: var(--bg-white);
     flex-shrink: 0;
     margin-left: -4px;
+    transition: transform 0.2s;
 }
 
 .tl-bar-avatar:first-child { margin-left: 0; }
+.tl-bar-avatar:hover { transform: scale(1.25); z-index: 2; }
+
+/* Image thumbnails on bar */
+.tl-bar-image {
+    width: 24px;
+    height: 24px;
+    border-radius: 4px;
+    border: 2px solid rgba(255,255,255,0.8);
+    object-fit: cover;
+    background: var(--bg-white);
+    flex-shrink: 0;
+    margin-left: -4px;
+    transition: transform 0.2s;
+}
+
+.tl-bar-image:first-child { margin-left: 0; }
+.tl-bar-image:hover { transform: scale(1.25); z-index: 2; }
 
 /* Responsive timeline */
 @media (max-width: 768px) {
     .tl-label { min-width: 150px; padding: 0.6rem 0.5rem; }
-    .tl-label-avatar { width: 28px; height: 28px; }
+    .tl-label-avatar,
+    .tl-label-image { width: 28px; height: 28px; }
     .tl-label-text span, .tl-label-text a { font-size: 0.72rem; }
     .tl-bar-fill { height: 22px; }
-    .tl-bar-avatar { width: 18px; height: 18px; }
+    .tl-bar-avatar,
+    .tl-bar-image { width: 18px; height: 18px; }
     .tl-year-header { font-size: 0.8rem; }
     .timeline-subtitle { font-size: 1.2rem; }
+    .tl-date-tooltip { font-size: 0.7rem; padding: 0.35rem 0.7rem; }
 }
 
 /* ============================================================

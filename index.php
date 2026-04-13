@@ -602,13 +602,43 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['send_message'])) {
     <!-- Timeline / Journey Section -->
     <?php
     $tl_items = [];
+    $tl_images_map = [];
+    $tl_avatars_map = [];
     try {
         $tl_check = $conn->query("SHOW TABLES LIKE 'timeline_entries'");
         if ($tl_check && $tl_check->num_rows > 0) {
+            // Check and add display_type column if missing
+            $col_check = $conn->query("SHOW COLUMNS FROM timeline_entries LIKE 'display_type'");
+            if ($col_check && $col_check->num_rows == 0) {
+                $conn->query("ALTER TABLE timeline_entries ADD COLUMN display_type ENUM('icon','avatar','image') DEFAULT 'icon' AFTER avatar_id");
+            }
+
             $tl_query = $conn->query("SELECT * FROM timeline_entries WHERE is_active = 1 ORDER BY sort_order ASC, start_date ASC");
             if ($tl_query && $tl_query->num_rows > 0) {
                 while ($row = $tl_query->fetch_assoc()) {
                     $tl_items[] = $row;
+                }
+            }
+
+            // Fetch timeline images
+            $img_check = $conn->query("SHOW TABLES LIKE 'timeline_images'");
+            if ($img_check && $img_check->num_rows > 0) {
+                $img_q = $conn->query("SELECT * FROM timeline_images ORDER BY sort_order ASC");
+                if ($img_q) {
+                    while ($r = $img_q->fetch_assoc()) {
+                        $tl_images_map[$r['timeline_entry_id']][] = $r;
+                    }
+                }
+            }
+
+            // Fetch timeline avatars
+            $avt_check = $conn->query("SHOW TABLES LIKE 'timeline_avatars'");
+            if ($avt_check && $avt_check->num_rows > 0) {
+                $avt_q = $conn->query("SELECT * FROM timeline_avatars ORDER BY sort_order ASC");
+                if ($avt_q) {
+                    while ($r = $avt_q->fetch_assoc()) {
+                        $tl_avatars_map[$r['timeline_entry_id']][] = $r;
+                    }
                 }
             }
         }
@@ -659,7 +689,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['send_message'])) {
                     </div>
                     <?php endforeach; ?>
 
-                    <!-- Quarter row -->
+                    <!-- Month row -->
                     <div class="tl-corner tl-corner-sub"></div>
                     <?php foreach ($months as $mo): ?>
                     <div class="tl-month-header <?php echo ($mo['year'] == date('Y') && $mo['month'] == date('n')) ? 'tl-current-month' : ''; ?>">
@@ -669,14 +699,39 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['send_message'])) {
 
                     <!-- Data rows -->
                     <?php foreach ($tl_items as $idx => $item):
-                        // Build avatar URL
-                        $av_url = '';
-                        if (!empty($item['avatar_id'])) {
-                            $parts = explode('-', $item['avatar_id']);
-                            $gender = $parts[0] ?? 'm';
-                            $num = $parts[1] ?? 1;
-                            $seed_prefix = $gender === 'f' ? 'female-avatar-' : 'male-avatar-';
-                            $av_url = "https://api.dicebear.com/7.x/adventurer/svg?seed={$seed_prefix}{$num}&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf";
+                        $item_id = $item['id'];
+                        $display_type = $item['display_type'] ?? 'icon';
+                        $entry_images = $tl_images_map[$item_id] ?? [];
+                        $entry_avatars = $tl_avatars_map[$item_id] ?? [];
+
+                        // Build avatar URLs for this entry
+                        $avatar_urls = [];
+                        if ($display_type === 'avatar') {
+                            // Use multi-avatar table first
+                            if (!empty($entry_avatars)) {
+                                foreach (array_slice($entry_avatars, 0, 10) as $av) {
+                                    $parts = explode('-', $av['avatar_id']);
+                                    $gender = $parts[0] ?? 'm';
+                                    $num = $parts[1] ?? 1;
+                                    $seed_prefix = $gender === 'f' ? 'female-avatar-' : 'male-avatar-';
+                                    $avatar_urls[] = "https://api.dicebear.com/7.x/adventurer/svg?seed={$seed_prefix}{$num}&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf";
+                                }
+                            } elseif (!empty($item['avatar_id'])) {
+                                // Fallback to single avatar_id
+                                $parts = explode('-', $item['avatar_id']);
+                                $gender = $parts[0] ?? 'm';
+                                $num = $parts[1] ?? 1;
+                                $seed_prefix = $gender === 'f' ? 'female-avatar-' : 'male-avatar-';
+                                $avatar_urls[] = "https://api.dicebear.com/7.x/adventurer/svg?seed={$seed_prefix}{$num}&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf";
+                            }
+                        }
+
+                        // Build image paths for this entry
+                        $image_paths = [];
+                        if ($display_type === 'image' && !empty($entry_images)) {
+                            foreach (array_slice($entry_images, 0, 10) as $img) {
+                                $image_paths[] = 'uploads/' . $img['image_path'];
+                            }
                         }
 
                         // Calculate start/end column positions
@@ -684,6 +739,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['send_message'])) {
                         $eDate = $item['end_date'] ? new DateTime($item['end_date']) : new DateTime();
                         $sKey = $sDate->format('Y') . '-' . $sDate->format('m');
                         $eKey = $eDate->format('Y') . '-' . $eDate->format('m');
+
+                        // Format dates for tooltip
+                        $startDateFormatted = $sDate->format('M Y');
+                        $endDateFormatted = $item['end_date'] ? $eDate->format('M Y') : 'Present';
 
                         $startCol = -1;
                         $endCol = -1;
@@ -697,11 +756,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['send_message'])) {
                         $barSpan = $endCol - $startCol + 1;
                     ?>
                     <!-- Label cell -->
-                    <div class="tl-label">
-                        <?php if ($av_url): ?>
-                            <img src="<?php echo $av_url; ?>" class="tl-label-avatar" alt="<?php echo htmlspecialchars($item['title']); ?>">
+                    <div class="tl-label" data-dates="<?php echo htmlspecialchars($startDateFormatted . ' — ' . $endDateFormatted); ?>">
+                        <?php if ($display_type === 'avatar' && !empty($avatar_urls)): ?>
+                            <img src="<?php echo $avatar_urls[0]; ?>" class="tl-label-avatar" alt="<?php echo htmlspecialchars($item['title']); ?>">
+                        <?php elseif ($display_type === 'image' && !empty($image_paths)): ?>
+                            <img src="<?php echo htmlspecialchars($image_paths[0]); ?>" class="tl-label-image" alt="<?php echo htmlspecialchars($item['title']); ?>">
                         <?php else: ?>
-                            <div class="tl-label-icon" style="color:<?php echo htmlspecialchars($item['color']); ?>;"><i class="<?php echo htmlspecialchars($item['icon']); ?>"></i></div>
+                            <div class="tl-label-icon" style="color:<?php echo htmlspecialchars($item['color']); ?>;">
+                                <i class="<?php echo htmlspecialchars($item['icon']); ?>"></i>
+                            </div>
                         <?php endif; ?>
                         <div class="tl-label-text">
                             <?php if (!empty($item['link'])): ?>
@@ -713,6 +776,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['send_message'])) {
                                 <small><?php echo htmlspecialchars($item['description']); ?></small>
                             <?php endif; ?>
                         </div>
+                        <!-- Hover tooltip for dates -->
+                        <div class="tl-date-tooltip"><em><?php echo htmlspecialchars($startDateFormatted . ' — ' . $endDateFormatted); ?></em></div>
                     </div>
 
                     <!-- Empty cells before bar -->
@@ -723,8 +788,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['send_message'])) {
                     <!-- Bar cell -->
                     <div class="tl-bar" style="grid-column: span <?php echo $barSpan; ?>; --bar-color: <?php echo htmlspecialchars($item['color']); ?>;">
                         <div class="tl-bar-fill">
-                            <?php if ($av_url): ?>
-                                <img src="<?php echo $av_url; ?>" class="tl-bar-avatar" alt="">
+                            <?php if ($display_type === 'avatar' && !empty($avatar_urls)): ?>
+                                <?php foreach ($avatar_urls as $aurl): ?>
+                                    <img src="<?php echo $aurl; ?>" class="tl-bar-avatar" alt="">
+                                <?php endforeach; ?>
+                            <?php elseif ($display_type === 'image' && !empty($image_paths)): ?>
+                                <?php foreach ($image_paths as $ipath): ?>
+                                    <img src="<?php echo htmlspecialchars($ipath); ?>" class="tl-bar-image" alt="">
+                                <?php endforeach; ?>
                             <?php endif; ?>
                         </div>
                     </div>
